@@ -83,7 +83,6 @@ h3 {
   font-size: 104px;
   color: var(--accent);
   text-shadow: 5px 5px 0 #2a1f45, -2px -2px 0 rgba(208, 190, 255, 0.25);
-  filter: url(#boil);
   line-height: 0.95;
 }
 .title-screen .sub {
@@ -291,7 +290,6 @@ h3 {
   font-size: 58px;
   color: var(--accent);
   text-shadow: 4px 4px 0 #2a1f45, 0 0 24px rgba(0, 0, 0, 0.9);
-  filter: url(#boil);
   letter-spacing: 1px;
 }
 .float-num {
@@ -376,6 +374,5 @@ h3 {
   background: radial-gradient(circle at 35% 35%, #fff3a0, var(--accent) 45%, #6b5a00);
   color: var(--accent-text);
   font-weight: bold;
-  filter: url(#boil);
 }
 

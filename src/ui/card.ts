@@ -7,9 +7,9 @@ import { h } from './dom.ts';
 import type { CardView } from './view.ts';
 
 const ICON = {
-  blood: '<svg class="cost-icon" viewBox="0 0 18 22"><path d="M9 1C9 1 2 10 2 14a7 7 0 0 0 14 0C16 10 9 1 9 1z" fill="var(--blood)" stroke="var(--ink)" stroke-width="1"/></svg>',
-  bones: '<svg class="cost-icon" viewBox="0 0 22 22"><g transform="rotate(-40 11 11)" fill="var(--paper)" stroke="var(--ink)" stroke-width="1.2"><rect x="4" y="9" width="14" height="4" rx="1"/><circle cx="4" cy="8.5" r="2.6"/><circle cx="4" cy="13.5" r="2.6"/><circle cx="18" cy="8.5" r="2.6"/><circle cx="18" cy="13.5" r="2.6"/></g></svg>',
-  energy: '<svg class="cost-icon" viewBox="0 0 18 22"><path d="M9 1l7 4v12l-7 4-7-4V5z" fill="var(--energy)" stroke="var(--ink)" stroke-width="1"/></svg>',
+  blood: '<span class="cost-icon spr-blood"></span>',
+  bones: '<span class="cost-icon spr-cost-bone"></span>',
+  energy: '<span class="cost-icon spr-cost-energy"></span>',
 };
 
 export function costHtml(cost: Cost): string {

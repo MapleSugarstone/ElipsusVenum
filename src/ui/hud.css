@@ -265,7 +265,6 @@ button:disabled {
   font-size: 46px;
   color: var(--accent);
   text-shadow: 4px 4px 0 #2a1f45;
-  filter: url(#boil);
   text-align: center;
   letter-spacing: 4px;
   text-transform: uppercase;
@@ -321,7 +320,6 @@ button:disabled {
   stroke-width: 3;
   stroke-dasharray: 2 8;
   stroke-linecap: round;
-  filter: url(#boil);
 }
 .thread.live {
   stroke: var(--accent);
@@ -600,47 +598,14 @@ button:disabled {
   cursor: pointer;
   z-index: 15;
 }
-.bell-obj .knob {
+.bell-obj .bell-sprite {
   position: absolute;
-  left: 54px;
-  top: 0;
-  width: 16px;
-  height: 12px;
-  background: #8a6a00;
-  border: 3px solid #000;
-  border-radius: 50% 50% 3px 3px;
-}
-.bell-obj .dome {
-  position: absolute;
-  left: 30px;
-  top: 9px;
-  width: 64px;
-  height: 52px;
-  background-color: var(--candle);
-  background-image: var(--fill-acid);
-  background-size: 16px 16px;
-  border: 3px solid #000;
-  border-radius: 50% 50% 14% 14% / 72% 72% 12% 12%;
-  box-shadow: 4px 4px 0 #000;
-}
-.bell-obj .lip {
-  position: absolute;
-  left: 22px;
-  top: 56px;
-  width: 80px;
-  height: 12px;
-  background: #b38a00;
-  border: 3px solid #000;
-  border-radius: 8px 6px 9px 5px;
-}
-.bell-obj .clapper {
-  position: absolute;
-  left: 54px;
-  top: 68px;
-  width: 16px;
-  height: 12px;
-  background: #000;
-  border-radius: 50%;
+  left: 34px;
+  top: 16px;
+  width: 56px;
+  height: 56px;
+  background: var(--spr-bell) 0 0 / 100% 100%;
+  image-rendering: pixelated;
 }
 .bell-obj .bell-plate {
   position: absolute;
@@ -679,10 +644,8 @@ button:disabled {
   transform: translateY(-4px);
   box-shadow: 6px 10px 0 #000;
 }
-.bell-obj.ready:hover .dome,
-.bell-obj.ready:hover .lip,
-.bell-obj.ringing .dome,
-.bell-obj.ringing .lip {
+.bell-obj.ready:hover .bell-sprite,
+.bell-obj.ringing .bell-sprite {
   animation: bell-swing 0.5s steps(5);
 }
 @keyframes bell-swing {
@@ -709,10 +672,7 @@ button:disabled {
 .bell-obj.off {
   cursor: default;
 }
-.bell-obj.off .knob,
-.bell-obj.off .dome,
-.bell-obj.off .lip,
-.bell-obj.off .clapper {
+.bell-obj.off .bell-sprite {
   filter: grayscale(0.9) brightness(0.45);
 }
 .bell-obj.off .bell-plate {
@@ -991,4 +951,141 @@ label.field {
   font-size: 12px;
   color: var(--accent-2);
   text-shadow: 2px 2px 0 #000;
+}
+
+/* ---------------------------------------------------------------- pixel sprites
+
+   Every icon is a sprite from sprites.ts at 4 units per art pixel, so nothing drawn by the browser sits next to the art. */
+
+html {
+  /* The pixel fonts differ in size, so every face is matched to one x-height. */
+  font-size-adjust: ex-height 0.5;
+}
+.spr,
+.cost-icon,
+.candle,
+.cell,
+.tooth,
+.devotion span {
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+}
+.spr {
+  display: inline-block;
+}
+.spr-bone {
+  width: 40px;
+  height: 20px;
+  background-image: var(--spr-bone);
+  background-size: 100% 100%;
+}
+.spr-shield {
+  width: 28px;
+  height: 32px;
+  background-image: var(--spr-shield);
+  background-size: 100% 100%;
+}
+.candles {
+  gap: 4px;
+  align-items: flex-end;
+}
+.candle {
+  width: 24px;
+  height: 56px;
+  border-radius: 0;
+  background-color: transparent;
+}
+.candle.lit {
+  background-image: var(--spr-candle-lit);
+  background-size: 72px 56px;
+  animation: candle-flicker 0.45s steps(3) infinite;
+}
+.candle.lit::before {
+  content: none;
+}
+.candle.out {
+  opacity: 1;
+  background-image: var(--spr-candle-out);
+  background-size: 48px 56px;
+  animation: candle-smoke 1.2s steps(2) infinite;
+}
+@keyframes candle-flicker {
+  to {
+    background-position: -72px 0;
+  }
+}
+@keyframes candle-smoke {
+  to {
+    background-position: -48px 0;
+  }
+}
+.cell {
+  width: 28px;
+  height: 32px;
+  clip-path: none;
+  background: var(--spr-energy-empty) 0 0 / 100% 100%;
+}
+.cell.full {
+  background: var(--spr-energy) 0 0 / 100% 100%;
+}
+.teeth {
+  gap: 4px;
+}
+.tooth {
+  width: 32px;
+  height: 16px;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--spr-tooth-empty) 0 0 / 100% 100%;
+}
+.tooth.win {
+  background: var(--spr-tooth-win) 0 0 / 100% 100%;
+  box-shadow: none;
+}
+.tooth.loss {
+  background: var(--spr-tooth-loss) 0 0 / 100% 100%;
+  border-radius: 0;
+}
+.tooth.mid {
+  width: 48px;
+  height: 4px;
+  background: var(--accent-2);
+  border-radius: 0;
+}
+.tooth-count .tooth {
+  width: 20px;
+  height: 20px;
+  background: var(--spr-tooth) 0 0 / 100% 100%;
+}
+.devotion span {
+  width: 12px;
+  height: 16px;
+  border: none;
+  border-radius: 0;
+  background: var(--spr-bead-off) 0 0 / 100% 100%;
+}
+.devotion span.on,
+.devotion.blessed span {
+  background: var(--spr-bead-on) 0 0 / 100% 100%;
+  box-shadow: none;
+}
+.cost-icon {
+  display: inline-block;
+  background-size: 100% 100%;
+}
+.cost-icon.spr-blood {
+  width: 20px;
+  height: 28px;
+  background-image: var(--spr-blood);
+}
+.cost-icon.spr-cost-bone {
+  width: 28px;
+  height: 20px;
+  background-image: var(--spr-cost-bone);
+}
+.cost-icon.spr-cost-energy {
+  width: 20px;
+  height: 24px;
+  background-image: var(--spr-cost-energy);
 }

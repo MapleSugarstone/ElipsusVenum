@@ -15,8 +15,8 @@ import { boardView, type BoardView, type CardView } from './view.ts';
 import { sfx } from '../audio/sfx.ts';
 import { music } from '../audio/music.ts';
 
-const BONE_SVG = '<svg viewBox="0 0 22 22" width="22" height="22"><g transform="rotate(-40 11 11)" fill="#e3dcc4" stroke="#000" stroke-width="1.4"><rect x="4" y="9" width="14" height="4" rx="1"/><circle cx="4" cy="8.5" r="2.6"/><circle cx="4" cy="13.5" r="2.6"/><circle cx="18" cy="8.5" r="2.6"/><circle cx="18" cy="13.5" r="2.6"/></g></svg>';
-const SHIELD_SVG = '<svg viewBox="0 0 22 22" width="22" height="22"><path d="M11 2 L19 5 L18 13 Q16 18 11 20 Q6 18 4 13 L3 5 Z" fill="#d0beff" stroke="#000" stroke-width="1.4"/></svg>';
+const BONE_SVG = '<span class="spr spr-bone"></span>';
+const SHIELD_SVG = '<span class="spr spr-shield"></span>';
 
 const LEFT = 158;
 const LANE_W = 150;
@@ -557,7 +557,7 @@ export class BattleScreen {
         onRing();
       },
     },
-      h('div', { class: 'knob' }), h('div', { class: 'dome' }), h('div', { class: 'lip' }), h('div', { class: 'clapper' }),
+      h('div', { class: 'bell-sprite' }),
       h('div', { class: 'bell-plate' }, h('div', { class: 'bell-main' }, main), h('div', { class: 'bell-sub' }, sub)),
     );
     hoverTip(el, 'End turn', 'Your creatures attack, then the enemy attacks and moves up. Press Space to ring the bell.');

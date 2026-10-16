@@ -12,9 +12,9 @@
   --danger: #e84800;
   --ok: #00d576;
   --warn: #faaf00;
-  --font-display: Bahnschrift, 'DIN Alternate', 'Franklin Gothic Medium', 'Nimbus Sans Narrow', sans-serif-condensed, sans-serif;
-  --font-ui: Inter, Roboto, 'Helvetica Neue', 'Arial Nova', 'Nimbus Sans', Arial, sans-serif;
-  --font-mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --font-display: 'Pixelify Sans', Bahnschrift, 'Franklin Gothic Medium', sans-serif;
+  --font-ui: 'Pixelify Sans', Bahnschrift, Arial, sans-serif;
+  --font-mono: 'VT323', ui-monospace, Consolas, monospace;
   --radius: 7px;
   --radius-lg: 15px;
   --border-w: 2px;

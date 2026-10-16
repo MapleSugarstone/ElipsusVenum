@@ -11,6 +11,7 @@ import { clear, h, toast } from './dom.ts';
 import { dissolveIn } from './wipe.ts';
 import { ART, grid, snapScale } from './grid.ts';
 import { ditherFill, grainTexture, nodeGenre, VoidRenderer } from './void.ts';
+import { installSprites } from './sprites.ts';
 import { blip } from '../audio/sfx.ts';
 import { hideInspect, setStageScale } from './inspect.ts';
 import { MapScreen } from './map.ts';
@@ -89,6 +90,7 @@ export class App {
 
   constructor(stage: HTMLElement) {
     this.stage = stage;
+    installSprites();
     this.hud = new Hud(this);
     this.dealerEl = this.hud.speech;
     setSfxVolume(this.prefs.sfx);
