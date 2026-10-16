@@ -622,7 +622,6 @@ export class BattleScreen {
       if (!mineSeat && s.rung) res.append(h('div', { class: 'r-rung' }, 'Rang the bell'));
       panel.append(res);
       panel.append(this.renderHand(seat, mineSeat));
-      if (wantDraw) panel.append(this.drawChoice(seat));
     }
     this.soloBell = null;
     if (this.app.solo()) {
@@ -653,28 +652,6 @@ export class BattleScreen {
     );
     hoverTip(el, 'End turn', 'Your creatures attack, then the enemy attacks and moves up. Press Space to ring the bell.');
     return el;
-  }
-
-  /** Two big piles over the hand while a draw is owed, since the turn cannot go on until one is clicked. */
-  private drawChoice(seat: Seat): HTMLDivElement {
-    const s = this.b.seats[seat];
-    const box = h('div', { class: `draw-choice s${seat}` }, h('div', { class: 'dc-title' }, this.app.solo() ? `Draw a card for ${this.charName(seat)}` : 'Draw a card'));
-    const row = h('div', { class: 'dc-row' });
-    const pile = (label: string, sub: string, count: number, from: 'main' | 'side', key: string) => {
-      const can = count > 0;
-      const el = h('div', { class: `big-pile ${from} ${can ? '' : 'empty'}`, onclick: () => can && this.act(seat, { t: 'draw', from }) },
-        h('div', { class: 'back' }), h('div', { class: 'back' }), h('div', { class: 'back' }),
-        h('div', { class: 'bp-count' }, String(count)),
-        h('div', { class: 'bp-label' }, label, h('span', { class: 'bp-key' }, key)),
-        h('div', { class: 'bp-sub' }, sub));
-      return el;
-    };
-    row.append(
-      pile('Deck', 'Your next card', s.deck.length + s.discard.length, 'main', 'D'),
-      pile('Side', 'A free Placeholder', s.side.length, 'side', 'S'),
-    );
-    box.append(row);
-    return box;
   }
 
   /** Whether any card in these seats' hands could be paid for right now. */

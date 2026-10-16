@@ -824,135 +824,6 @@ label.field {
   width: fit-content;
 }
 
-/* ---------------------------------------------------------------- the draw choice */
-
-.draw-choice {
-  position: absolute;
-  top: 6px;
-  width: 530px;
-  height: 264px;
-  z-index: 12;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  background: rgba(6, 8, 1, 0.9);
-  border: 2px solid #000;
-  box-shadow: inset 0 0 0 2px rgba(212, 186, 0, 0.35);
-  border-radius: 6px 3px 8px 2px;
-}
-.draw-choice.s0 {
-  left: 206px;
-}
-.draw-choice.s1 {
-  left: 64px;
-}
-.dc-title {
-  font-family: var(--font-display);
-  font-size: 22px;
-  letter-spacing: 1.2px;
-  text-transform: uppercase;
-  color: var(--accent);
-  text-shadow: 2px 2px 0 #000;
-}
-.dc-row {
-  display: flex;
-  gap: 40px;
-}
-.big-pile {
-  position: relative;
-  width: 128px;
-  height: 196px;
-  cursor: pointer;
-  transition: transform 0.12s steps(2);
-}
-.big-pile .back {
-  position: absolute;
-  width: 116px;
-  height: 160px;
-  border: 3px solid #000;
-  border-radius: 9px 5px 10px 4px;
-  background-color: #2a1f45;
-  background-image: var(--fill-hot);
-  background-size: 16px 16px;
-  image-rendering: pixelated;
-}
-.big-pile .back:nth-child(1) {
-  left: 12px;
-  top: 8px;
-}
-.big-pile .back:nth-child(2) {
-  left: 6px;
-  top: 4px;
-}
-.big-pile .back:nth-child(3) {
-  left: 0;
-  top: 0;
-  outline: 3px solid var(--accent);
-  box-shadow: 0 0 18px rgba(212, 186, 0, 0.45);
-}
-.big-pile.side .back {
-  background-color: #2a2510;
-}
-.big-pile:hover {
-  transform: translateY(-8px);
-}
-.big-pile:hover .back:nth-child(3) {
-  outline-color: #fff36b;
-}
-.big-pile.empty {
-  opacity: 0.3;
-  cursor: default;
-}
-.big-pile.empty:hover {
-  transform: none;
-}
-.bp-count {
-  position: absolute;
-  left: 0;
-  width: 116px;
-  top: 52px;
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: 46px;
-  color: var(--text);
-  text-shadow: 3px 3px 0 #000;
-}
-.bp-label {
-  position: absolute;
-  left: 0;
-  width: 116px;
-  top: 166px;
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: 18px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--text);
-  text-shadow: 2px 2px 0 #000;
-}
-.bp-key {
-  margin-left: 8px;
-  padding: 0 5px;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--accent-text);
-  background: var(--accent);
-  border: 2px solid #000;
-}
-.bp-sub {
-  position: absolute;
-  left: -10px;
-  width: 136px;
-  top: 116px;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--accent-2);
-  text-shadow: 2px 2px 0 #000;
-}
-
 /* ---------------------------------------------------------------- pixel sprites
 
    Every icon is a sprite from sprites.ts at 4 units per art pixel, so nothing drawn by the browser sits next to the art. */
@@ -1029,11 +900,11 @@ html {
   background: var(--spr-energy) 0 0 / 100% 100%;
 }
 .teeth {
-  gap: 4px;
+  gap: 2px;
 }
 .tooth {
   width: 32px;
-  height: 16px;
+  height: 12px;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -1193,5 +1064,87 @@ html {
 }
 .chip-combo {
   background: #3a3006;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- draw piles
+
+   Card backs are 16 by 22 art pixel sprites, stacked a pixel apart. While a draw is owed, two rings of dithered light
+   shimmer around the pile: 50 percent close in, 25 percent farther out. */
+
+.r-piles {
+  gap: 20px;
+  margin-top: 8px;
+}
+.pile-stack {
+  width: 72px;
+  height: 96px;
+  z-index: 0;
+}
+.pile-stack .back {
+  width: 64px;
+  height: 88px;
+  border: none;
+  border-radius: 0;
+  background: var(--spr-back) 0 0 / 100% 100%;
+  image-rendering: pixelated;
+}
+.pile-stack.side .back {
+  background-image: var(--spr-back-side);
+}
+.pile-stack .back:nth-child(1) {
+  left: 8px;
+  top: 8px;
+}
+.pile-stack .back:nth-child(2) {
+  left: 4px;
+  top: 4px;
+}
+.pile-stack .back:nth-child(3)::after {
+  content: none;
+}
+.pile-stack.want .back:nth-child(3) {
+  outline: none;
+  box-shadow: none;
+}
+.pile-stack.want::before,
+.pile-stack.want::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  image-rendering: pixelated;
+  background-size: 16px 16px;
+  animation: halo-shimmer 0.5s steps(1) infinite;
+}
+.pile-stack.want::before {
+  inset: -16px -16px -8px -16px;
+  background-image: var(--spr-halo-far);
+}
+.pile-stack.want::after {
+  inset: -8px -8px 0 -8px;
+  background-image: var(--spr-halo-near);
+}
+@keyframes halo-shimmer {
+  50% {
+    background-position: 4px 0;
+  }
+}
+.pile-stack.want:hover {
+  transform: translateY(-4px);
+}
+.pile-count {
+  left: 0;
+  right: auto;
+  width: 64px;
+  top: 28px;
+  font-size: 28px;
+}
+.pile-label {
+  left: -4px;
+  right: -4px;
+  top: 100px;
+  font-size: 13px;
+}
+.pile-stack.want .pile-label {
   color: var(--accent);
 }

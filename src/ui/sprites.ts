@@ -30,9 +30,13 @@ const SPRITES: Record<string, string[][]> = {
   'energy-empty': [['...k...', '..kzk..', '.kzxxk.', 'kzxxxxk', 'kxxxxxk', '.kxxxk.', '..kxk..', '...k...']],
   bone: [['.kk....kk.', 'kppkkkkppk', '.kppppppk.', 'kpqkkkkqpk', '.kk....kk.']],
   shield: [['kkkkkkk', 'kvvvvuk', 'kvvvuuk', 'kvvvuuk', 'kvvuunk', '.kvunk.', '..kuk..', '...k...']],
-  'tooth-win': [['kkkkkkkk', 'kyffffak', '.kffffk.', '..kaak..']],
-  'tooth-loss': [['..kmmk..', '.krrrrk.', 'krlrrrmk', 'kkkkkkkk']],
-  'tooth-empty': [['.tttttt.', 'tj....jt', '.tj..jt.', '..tttt..']],
+  'tooth-win': [['kkkkkkkk', '.kyffak.', '..kaak..']],
+  'tooth-loss': [['..kmmk..', '.krlrmk.', 'kkkkkkkk']],
+  'tooth-empty': [['.tttttt.', '.tj..jt.', '..tttt..']],
+  'halo-near': [['f.f.', '.f.f', 'f.f.', '.f.f']],
+  'halo-far': [['f...', '..f.', '.f..', '...f']],
+  back: [cardBack('n', 'u', 'v')],
+  'back-side': [cardBack('d', 'a', 'f')],
   tooth: [['kkkkk', 'kyffk', 'kfffk', '.kak.', '..k..']],
   'bead-on': [['.k.', 'kyk', 'kfk', '.k.']],
   'bead-off': [['.k.', 'kak', 'kdk', '.k.']],
@@ -57,6 +61,24 @@ const SPRITES: Record<string, string[][]> = {
     '......kk......',
   ]],
 };
+
+/** A 16 by 22 card back: a black rim, a dithered field of two colors, and a ring around a dark middle for the count. */
+function cardBack(a: string, b: string, ring: string): string[] {
+  const rows: string[] = [];
+  for (let y = 0; y < 22; y++) {
+    let row = '';
+    for (let x = 0; x < 16; x++) {
+      const dx = (x - 7.5) / 4.5, dy = (y - 10.5) / 6.5, r = dx * dx + dy * dy;
+      if (x === 0 || x === 15 || y === 0 || y === 21) row += 'k';
+      else if (r < 0.55) row += 'k';
+      else if (r < 1.05) row += ring;
+      else if (r < 1.35) row += 'k';
+      else row += (x + y) % 2 ? a : b;
+    }
+    rows.push(row);
+  }
+  return rows;
+}
 
 function draw(frames: string[][]): string {
   const fw = frames[0][0].length, fh = frames[0].length;
