@@ -62,7 +62,7 @@ const SPRITES: Record<string, string[][]> = {
   ]],
 };
 
-/** A 16 by 22 card back: a black rim, a dithered field of two colors, and a ring around a dark middle for the count. */
+/** A 16 by 22 card back: a black rim, a dithered field of two colors, and a ringed eye in the middle. */
 function cardBack(a: string, b: string, ring: string): string[] {
   const rows: string[] = [];
   for (let y = 0; y < 22; y++) {
@@ -70,7 +70,8 @@ function cardBack(a: string, b: string, ring: string): string[] {
     for (let x = 0; x < 16; x++) {
       const dx = (x - 7.5) / 4.5, dy = (y - 10.5) / 6.5, r = dx * dx + dy * dy;
       if (x === 0 || x === 15 || y === 0 || y === 21) row += 'k';
-      else if (r < 0.55) row += 'k';
+      else if (r < 0.18) row += 'k';
+      else if (r < 0.55) row += 'y';
       else if (r < 1.05) row += ring;
       else if (r < 1.35) row += 'k';
       else row += (x + y) % 2 ? a : b;

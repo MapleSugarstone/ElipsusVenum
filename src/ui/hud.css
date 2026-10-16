@@ -1132,18 +1132,24 @@ html {
 .pile-stack.want:hover {
   transform: translateY(-4px);
 }
+/* The count sits under the pile, where the card back cannot swallow it. */
 .pile-count {
   left: 0;
   right: auto;
   width: 64px;
-  top: 28px;
-  font-size: 28px;
+  top: 96px;
+  font-size: 26px;
+  line-height: 1;
 }
 .pile-label {
   left: -4px;
-  right: -4px;
-  top: 100px;
+  right: auto;
+  width: 72px;
+  top: 122px;
   font-size: 13px;
+}
+.pile-stack.want .pile-count {
+  color: var(--accent);
 }
 .pile-stack.want .pile-label {
   color: var(--accent);
