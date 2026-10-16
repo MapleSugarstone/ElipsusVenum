@@ -12,11 +12,27 @@ import { markTerms } from '../engine/text.ts';
 const ROMAN = ['', 'I', 'II', 'III'];
 
 let tipEl: HTMLDivElement | null = null;
+let tipAnchor: HTMLElement | null = null;
+
+function hideTip(): void {
+  tipEl?.remove();
+  tipEl = null;
+  tipAnchor = null;
+}
+
+/** Closes the tip once its anchor leaves the page or the cursor, since a removed anchor never fires mouseleave. */
+function watchTip(): void {
+  if (!tipEl) return;
+  if (!tipAnchor?.isConnected || !tipAnchor.matches(':hover')) return hideTip();
+  requestAnimationFrame(watchTip);
+}
 
 /** A hover tip in the game's own style, used in place of the browser's title tooltips. */
 export function hoverTip(el: HTMLElement, title: string, text = ''): void {
   el.addEventListener('mouseenter', () => {
     tipEl?.remove();
+    tipAnchor = el;
+    requestAnimationFrame(watchTip);
     const body = h('div', {});
     body.append(...markTerms(text).map((s) => (s.b ? h('b', { style: { display: 'inline', fontSize: 'inherit', color: 'var(--accent-2)' } }, s.t) : document.createTextNode(s.t))));
     tipEl = h('div', { class: 'tip hud-tip' }, h('b', {}, title), body);
@@ -27,10 +43,8 @@ export function hoverTip(el: HTMLElement, title: string, text = ''): void {
     const below = r.bottom + 8;
     tipEl.style.top = below + 120 > window.innerHeight ? `${r.top - 8 - tipEl.offsetHeight}px` : `${below}px`;
   });
-  el.addEventListener('mouseleave', () => {
-    tipEl?.remove();
-    tipEl = null;
-  });
+  el.addEventListener('mouseleave', hideTip);
+  el.addEventListener('pointerdown', hideTip);
 }
 
 export function candleRow(n: number, max = Math.max(n, 2)): HTMLDivElement {
