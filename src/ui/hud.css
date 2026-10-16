@@ -19,10 +19,9 @@ button {
   background-image: var(--fill-dark);
   background-size: 16px 16px;
   image-rendering: pixelated;
-  border: 2px solid #000;
-  box-shadow: 4px 4px 0 #000, inset 0 0 0 1px rgba(208, 190, 255, 0.16);
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
   padding: 8px 18px;
-  border-radius: 10px 4px 12px 3px / 4px 10px 3px 12px;
 }
 button:hover:not(:disabled) {
   background-image: var(--fill-hot);
@@ -31,13 +30,13 @@ button:hover:not(:disabled) {
 }
 button:active:not(:disabled) {
   transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0 #000;
+  box-shadow: none;
 }
 button.primary {
   background-color: var(--accent);
   background-image: var(--fill-acid);
   color: var(--accent-text);
-  box-shadow: 4px 4px 0 #000, 0 0 16px rgba(212, 186, 0, 0.3);
+  box-shadow: 4px 4px 0 #000;
 }
 button.primary:hover:not(:disabled) {
   background-image: var(--fill-acid-hot);
@@ -57,7 +56,7 @@ button:disabled {
   font-family: var(--font-mono);
   font-size: 15px;
   color: var(--accent-2);
-  text-shadow: 2px 2px 0 #000;
+  text-shadow: 4px 4px 0 #000;
 }
 .title-menu button {
   font-size: 22px;
@@ -83,7 +82,7 @@ button:disabled {
   font-size: 20px;
   color: var(--accent-2);
   letter-spacing: 3px;
-  text-shadow: 2px 2px 0 #000;
+  text-shadow: 4px 4px 0 #000;
   pointer-events: none !important;
 }
 .hud-speech {
@@ -96,7 +95,7 @@ button:disabled {
   font-size: 18px;
   line-height: 1.3;
   color: var(--accent-2);
-  text-shadow: 2px 2px 0 #000, 0 0 10px #000;
+  text-shadow: 4px 4px 0 #000;
   pointer-events: none !important;
 }
 .hud-pause {
@@ -114,7 +113,6 @@ button:disabled {
   display: block;
   height: 4px;
   background: var(--accent);
-  border-radius: 2px 1px 3px 1px;
 }
 .hud-status {
   position: absolute;
@@ -138,8 +136,7 @@ button:disabled {
   width: 340px;
   padding: 10px 16px;
   background: var(--veil);
-  border: 1px solid #2c2440;
-  border-radius: 26px 10px 30px 8px / 12px 26px 10px 30px;
+  border: 4px solid #2c2440;
 }
 .plate.p0 {
   left: 16px;
@@ -213,9 +210,8 @@ button:disabled {
   font-size: 15px;
   color: #000;
   background: var(--accent-2);
-  border-radius: 52% 40% 56% 44% / 44% 56% 40% 52%;
-  border: 2px solid #000;
-  box-shadow: 2px 2px 0 #000;
+  border: 4px solid #000;
+  box-shadow: 4px 4px 0 #000;
   cursor: help;
 }
 .relic-icon.r-start {
@@ -229,7 +225,6 @@ button:disabled {
   background: var(--danger);
 }
 .item-icon {
-  border-radius: 5px 3px 6px 2px;
   background: var(--ok);
 }
 .hud-tip {
@@ -257,8 +252,7 @@ button:disabled {
   min-width: 420px;
   padding: 28px 34px;
   background: var(--veil);
-  border: 2px solid #2c2440;
-  border-radius: 40px 16px 44px 12px / 18px 40px 14px 44px;
+  border: 4px solid #2c2440;
 }
 .pause-title {
   font-family: var(--font-display);
@@ -312,43 +306,23 @@ button:disabled {
   position: absolute;
   left: 0;
   top: 0;
+  width: 1600px;
+  height: 900px;
+  image-rendering: pixelated;
   pointer-events: none;
-}
-.thread {
-  fill: none;
-  stroke: rgba(208, 190, 255, 0.55);
-  stroke-width: 3;
-  stroke-dasharray: 2 8;
-  stroke-linecap: round;
-}
-.thread.live {
-  stroke: var(--accent);
-  stroke-width: 3.5;
-  stroke-dasharray: 4 6;
-}
-.thread.past {
-  stroke: rgba(208, 190, 255, 0.2);
 }
 .map-node .node-label {
   position: absolute;
   left: 50%;
   top: 100%;
   transform: translateX(-50%);
-  margin-top: 3px;
+  margin-top: 0;
   font-size: 12px;
   letter-spacing: 1.5px;
   white-space: nowrap;
   color: var(--text);
-  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+  text-shadow: 4px 4px 0 #000;
   pointer-events: none;
-}
-.map-node.k-boss {
-  width: 96px;
-  height: 96px;
-  margin: -48px 0 0 -48px;
-}
-.map-node .tok {
-  top: -8px;
 }
 .map-controls {
   position: absolute;
@@ -365,7 +339,7 @@ button:disabled {
 .map-hint {
   font-family: var(--font-mono);
   color: var(--accent-2);
-  text-shadow: 2px 2px 0 #000;
+  text-shadow: 4px 4px 0 #000;
   font-size: 16px;
   width: 100%;
   text-align: center;
@@ -375,7 +349,7 @@ button:disabled {
   color: var(--muted);
 }
 .map-screen .coin {
-  top: 330px;
+  top: 332px;
 }
 
 /* ---------------------------------------------------------------- battle objects */
@@ -394,7 +368,7 @@ button:disabled {
   font-size: 22px;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  text-shadow: 2px 2px 0 #000;
+  text-shadow: 4px 4px 0 #000;
 }
 .seat-panel.s1 .res {
   align-items: flex-end;
@@ -445,8 +419,7 @@ button:disabled {
   font-family: var(--font-mono);
   font-size: 11px;
   padding: 1px 6px;
-  border: 1px solid #000;
-  border-radius: 6px 3px 7px 2px;
+  border: 4px solid #000;
   background: #2a1f45;
   color: var(--accent-2);
   cursor: help;
@@ -467,16 +440,15 @@ button:disabled {
 .devotion span {
   width: 7px;
   height: 12px;
-  border-radius: 50% 50% 2px 2px;
   background: #2a2510;
-  border: 1px solid #000;
+  border: 4px solid #000;
 }
 .devotion span.on {
   background: var(--candle);
 }
 .devotion.blessed span {
   background: #fff3a0;
-  box-shadow: 0 0 6px var(--candle);
+  box-shadow: none;
 }
 .r-piles {
   display: flex;
@@ -493,8 +465,7 @@ button:disabled {
   position: absolute;
   width: 50px;
   height: 68px;
-  border: 2px solid #000;
-  border-radius: 7px 4px 8px 3px;
+  border: 4px solid #000;
   background-color: #2a1f45;
   background-image: var(--fill-hot);
   background-size: 16px 16px;
@@ -519,8 +490,7 @@ button:disabled {
   top: 20px;
   width: 20px;
   height: 24px;
-  border: 2px solid var(--accent-2);
-  border-radius: 50%;
+  border: 4px solid var(--accent-2);
   opacity: 0.6;
 }
 .pile-stack.side .back {
@@ -531,8 +501,8 @@ button:disabled {
   animation: pile-pulse 1.6s ease-in-out infinite;
 }
 .pile-stack.want .back:nth-child(3) {
-  outline: 3px solid var(--accent);
-  box-shadow: 0 0 16px rgba(212, 186, 0, 0.55);
+  outline: 4px solid var(--accent);
+  box-shadow: none;
 }
 .pile-stack.want:hover {
   transform: translateY(-4px);
@@ -554,7 +524,7 @@ button:disabled {
   font-family: var(--font-display);
   font-size: 20px;
   color: var(--text);
-  text-shadow: 2px 2px 0 #000;
+  text-shadow: 4px 4px 0 #000;
 }
 .pile-label {
   position: absolute;
@@ -620,9 +590,8 @@ button:disabled {
   background-image: var(--fill-acid);
   background-size: 16px 16px;
   image-rendering: pixelated;
-  border: 3px solid #000;
-  border-radius: 6px 3px 8px 2px;
-  box-shadow: 6px 6px 0 #000;
+  border: 4px solid #000;
+  box-shadow: 8px 8px 0 #000;
   color: var(--accent-text);
 }
 .bell-obj .bell-main {
@@ -642,7 +611,7 @@ button:disabled {
 .bell-obj.ready:hover .bell-plate {
   background-image: var(--fill-acid-hot);
   transform: translateY(-4px);
-  box-shadow: 6px 10px 0 #000;
+  box-shadow: 8px 12px 0 #000;
 }
 .bell-obj.ready:hover .bell-sprite,
 .bell-obj.ringing .bell-sprite {
@@ -666,7 +635,7 @@ button:disabled {
 @keyframes bell-pulse {
   50% {
     filter: brightness(1.3);
-    box-shadow: 6px 6px 0 #000, 0 0 0 4px var(--accent);
+    box-shadow: 8px 8px 0 #000, 0 0 0 4px var(--accent);
   }
 }
 .bell-obj.off {
@@ -706,10 +675,10 @@ button:disabled {
   pointer-events: none;
 }
 .drag-ghost .card {
-  box-shadow: 10px 14px 0 rgba(0, 0, 0, 0.7);
+  box-shadow: 12px 16px 0 rgba(0, 0, 0, 0.7);
 }
 .slot.drop-hover {
-  border: 3px solid var(--accent);
+  border: 4px solid var(--accent);
   background: rgba(212, 186, 0, 0.28);
 }
 .battle .drop-any .slot.p {
@@ -728,9 +697,8 @@ button:disabled {
   background-image: var(--fill-dark);
   background-size: 16px 16px;
   image-rendering: pixelated;
-  border: 2px solid #000;
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.85), inset 0 0 0 2px rgba(208, 190, 255, 0.08);
-  border-radius: 6px 3px 8px 2px;
+  border: 4px solid #000;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.85), inset 0 0 0 4px rgba(208, 190, 255, 0.08);
 }
 
 /* ---------------------------------------------------------------- deck view and pages */
@@ -798,9 +766,8 @@ select {
   background-image: var(--fill-dark);
   background-size: 16px 16px;
   image-rendering: pixelated;
-  border: 2px solid #000;
-  box-shadow: inset 4px 4px 0 #000, 0 0 0 1px rgba(208, 190, 255, 0.16);
-  border-radius: 3px 2px 4px 2px;
+  border: 4px solid #000;
+  box-shadow: inset 4px 4px 0 #000;
   padding: 8px 12px;
 }
 label.field {
@@ -818,9 +785,8 @@ label.field {
   background-color: #0e1105;
   background-image: var(--fill-dark);
   background-size: 16px 16px;
-  border: 2px solid #000;
-  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.85), inset 0 0 0 2px rgba(208, 190, 255, 0.08);
-  border-radius: 6px 3px 8px 2px;
+  border: 4px solid #000;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.85), inset 0 0 0 4px rgba(208, 190, 255, 0.08);
   width: fit-content;
 }
 
@@ -863,7 +829,6 @@ html {
 .candle {
   width: 24px;
   height: 56px;
-  border-radius: 0;
   background-color: transparent;
 }
 .candle.lit {
@@ -920,7 +885,6 @@ html {
   width: 32px;
   height: 12px;
   border: none;
-  border-radius: 0;
   box-shadow: none;
   background: var(--spr-tooth-empty) 0 0 / 100% 100%;
 }
@@ -930,13 +894,11 @@ html {
 }
 .tooth.loss {
   background: var(--spr-tooth-loss) 0 0 / 100% 100%;
-  border-radius: 0;
 }
 .tooth.mid {
   width: 48px;
   height: 4px;
   background: var(--accent-2);
-  border-radius: 0;
 }
 .tooth-count .tooth {
   width: 20px;
@@ -947,7 +909,6 @@ html {
   width: 12px;
   height: 16px;
   border: none;
-  border-radius: 0;
   background: var(--spr-bead-off) 0 0 / 100% 100%;
 }
 .devotion span.on,
@@ -1004,7 +965,7 @@ html {
 .card .c-stats.changed span,
 .card .c-cost.changed {
   background: rgba(0, 213, 118, 0.32);
-  outline: 2px solid #00d576;
+  outline: calc(4px / var(--k, 1)) solid #00d576;
 }
 
 /* ---------------------------------------------------------------- terrain, choices, and chips */
@@ -1021,8 +982,8 @@ html {
   letter-spacing: 1px;
   text-transform: uppercase;
   color: #fff;
-  text-shadow: 2px 2px 0 #000;
-  border: 2px solid #000;
+  text-shadow: 4px 4px 0 #000;
+  border: 4px solid #000;
   background-color: #3a2a12;
   background-image: var(--fill-dark);
   background-size: 16px 16px;
@@ -1069,7 +1030,7 @@ html {
   font-family: var(--font-mono);
   font-size: 13px;
   padding: 0 5px;
-  border: 2px solid #000;
+  border: 4px solid #000;
   cursor: help;
 }
 .chip-later {
@@ -1099,7 +1060,6 @@ html {
   width: 64px;
   height: 88px;
   border: none;
-  border-radius: 0;
   background: var(--spr-back) 0 0 / 100% 100%;
   image-rendering: pixelated;
 }

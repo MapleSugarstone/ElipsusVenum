@@ -945,30 +945,6 @@ export class VoidRenderer {
   }
 }
 
-/** A small painting of one genre, for map nodes and decorations. */
-export function genreTile(genre: string, size: number, seed = 1, t = 0): string {
-  const c = document.createElement('canvas');
-  c.width = size;
-  c.height = size;
-  const ctx = c.getContext('2d')!;
-  const img = ctx.createImageData(size, size);
-  const painter = GENRES[genre] ?? GENRES.glitch;
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const u = (x / (size - 1)) * 2 - 1;
-      const v = (y / (size - 1)) * 2 - 1;
-      const col = painter(u, v, t, BAYER[y & 3][x & 3], seed);
-      const i = (y * size + x) * 4;
-      img.data[i] = col[0];
-      img.data[i + 1] = col[1];
-      img.data[i + 2] = col[2];
-      img.data[i + 3] = 255;
-    }
-  }
-  ctx.putImageData(img, 0, 0);
-  return c.toDataURL();
-}
-
 /** Static film grain as a data URL, for a faint overlay that gives flat surfaces some grit. */
 export function grainTexture(size = 160): string {
   const c = document.createElement('canvas');

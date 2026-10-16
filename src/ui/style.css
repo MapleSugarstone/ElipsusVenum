@@ -17,7 +17,7 @@
   --font-mono: 'VT323', ui-monospace, Consolas, monospace;
   --radius: 7px;
   --radius-lg: 15px;
-  --border-w: 2px;
+  --border-w: 4px;
   --shadow: none;
   color-scheme: dark;
 
@@ -61,14 +61,12 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--line);
-  border-radius: var(--radius);
 }
 button {
   font: inherit;
   color: var(--text);
   background: var(--surface-2);
   border: var(--border-w) solid var(--line);
-  border-radius: var(--radius);
   padding: 6px 14px;
   cursor: pointer;
 }
@@ -76,8 +74,8 @@ button:hover:not(:disabled) {
   border-color: var(--accent);
 }
 button:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: 4px solid var(--accent);
+  outline-offset: 4px;
 }
 button:disabled {
   opacity: 0.45;
@@ -94,13 +92,12 @@ select {
   color: var(--text);
   background: var(--surface);
   border: var(--border-w) solid var(--line);
-  border-radius: var(--radius);
   padding: 4px 8px;
 }
 input:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: 4px solid var(--accent);
+  outline-offset: 0;
 }
 
 #boot {
@@ -208,7 +205,7 @@ select:focus-visible {
   font-weight: normal;
   font-size: 24px;
   margin: 0 0 12px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 4px solid var(--line);
   padding-bottom: 6px;
 }
 .char-option {
@@ -242,10 +239,9 @@ select:focus-visible {
   transform-origin: top left;
   background: var(--paper);
   color: var(--ink);
-  border: 3px solid var(--ink-soft);
-  border-radius: var(--radius);
+  border: calc(4px / var(--k, 1)) solid var(--ink-soft);
   font-family: var(--font-ui);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+  box-shadow: none;
   overflow: hidden;
 }
 .card.static {
@@ -282,7 +278,7 @@ select:focus-visible {
   right: 10px;
   top: 42px;
   height: 152px;
-  border: 1px solid var(--ink-soft);
+  border: calc(4px / var(--k, 1)) solid var(--ink-soft);
   background-size: cover;
   image-rendering: pixelated;
 }
@@ -293,7 +289,7 @@ select:focus-visible {
   top: 198px;
   font-size: 13px;
   color: var(--ink-soft);
-  border-bottom: 1px solid var(--paper-2);
+  border-bottom: calc(4px / var(--k, 1)) solid var(--paper-2);
   padding-bottom: 2px;
 }
 .card .c-text {
@@ -378,9 +374,8 @@ select:focus-visible {
   height: 186px;
   background: var(--paper);
   color: var(--ink);
-  border: 2px solid var(--ink-soft);
-  border-radius: var(--radius);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+  border: 4px solid var(--ink-soft);
+  box-shadow: none;
   transition: left 0.28s ease, top 0.28s ease, opacity 0.25s ease;
   overflow: hidden;
   cursor: default;
@@ -404,7 +399,7 @@ select:focus-visible {
   height: 82px;
   background-size: cover;
   image-rendering: pixelated;
-  border: 1px solid var(--ink-soft);
+  border: 4px solid var(--ink-soft);
 }
 .mini .m-kw {
   position: absolute;
@@ -443,7 +438,6 @@ select:focus-visible {
   font-family: var(--font-ui);
   background: var(--ink);
   color: var(--paper);
-  border-radius: 3px;
   padding: 0 4px;
   line-height: 15px;
 }
@@ -461,11 +455,11 @@ select:focus-visible {
   border-color: var(--seat-1);
 }
 .mini.target {
-  outline: 3px solid var(--accent);
+  outline: 4px solid var(--accent);
   cursor: pointer;
 }
 .mini.sac {
-  outline: 3px solid var(--blood);
+  outline: 4px solid var(--blood);
 }
 .float-num {
   position: absolute;
@@ -474,7 +468,7 @@ select:focus-visible {
   color: var(--danger);
   pointer-events: none;
   animation: float-up 0.8s ease forwards;
-  text-shadow: 0 2px 0 var(--bg);
+  text-shadow: 0px 4px 0 var(--bg);
   z-index: 30;
 }
 .float-num.good {
@@ -506,7 +500,7 @@ select:focus-visible {
   align-items: center;
   gap: 18px;
   padding: 0 16px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 4px solid var(--line);
   background: var(--surface);
   font-size: 15px;
   z-index: 10;
@@ -530,15 +524,13 @@ select:focus-visible {
 .dot {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
   display: inline-block;
 }
 .slot {
   position: absolute;
   width: 150px;
   height: 186px;
-  border: 1px dashed var(--line);
-  border-radius: var(--radius);
+  border: 4px dashed var(--line);
 }
 .slot.q {
   height: 152px;
@@ -551,14 +543,15 @@ select:focus-visible {
   background: rgba(212, 133, 95, 0.08);
 }
 .slot.dead-lane {
-  background: repeating-linear-gradient(45deg, transparent 0 8px, rgba(0, 0, 0, 0.3) 8px 16px);
+  background: var(--spr-hatch) 0 0 / 16px 16px;
+  image-rendering: pixelated;
 }
 .seam {
   position: absolute;
   top: 52px;
   height: 560px;
   width: 0;
-  border-left: 1px solid var(--line);
+  border-left: 4px solid var(--line);
 }
 .row-label {
   position: absolute;
@@ -584,8 +577,7 @@ select:focus-visible {
   position: relative;
   width: 28px;
   flex: 1;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border: 4px solid var(--line);
   background: var(--surface);
   overflow: hidden;
 }
@@ -606,7 +598,7 @@ select:focus-visible {
   left: -4px;
   right: -4px;
   top: 50%;
-  border-top: 2px solid var(--text);
+  border-top: 4px solid var(--text);
 }
 .scale .s-val {
   font-family: var(--font-display);
@@ -625,7 +617,6 @@ select:focus-visible {
   width: 12px;
   height: 30px;
   background: var(--paper-2);
-  border-radius: 2px;
   position: relative;
 }
 .candle.lit::before {
@@ -636,7 +627,6 @@ select:focus-visible {
   width: 8px;
   height: 11px;
   background: var(--candle);
-  border-radius: 50% 50% 40% 40%;
 }
 .candle.out {
   opacity: 0.35;
@@ -646,7 +636,7 @@ select:focus-visible {
   top: 618px;
   height: 278px;
   width: 798px;
-  border-top: 1px solid var(--line);
+  border-top: 4px solid var(--line);
 }
 .seat-panel.s1 {
   left: 802px;
@@ -686,8 +676,7 @@ select:focus-visible {
 .pip {
   width: 12px;
   height: 14px;
-  border: 1px solid var(--energy);
-  border-radius: 2px;
+  border: 4px solid var(--energy);
 }
 .pip.full {
   background: var(--energy);
@@ -729,7 +718,7 @@ select:focus-visible {
   z-index: 20;
 }
 .hand .card.picked {
-  outline: 4px solid var(--accent);
+  outline: calc(4px / var(--k, 1)) solid var(--accent);
 }
 .hand .card.cant {
   filter: brightness(0.75);
@@ -739,8 +728,7 @@ select:focus-visible {
   width: 100px;
   height: 140px;
   background: var(--surface-2);
-  border: 2px solid var(--line);
-  border-radius: var(--radius);
+  border: 4px solid var(--line);
 }
 .bell {
   font-family: var(--font-display);
@@ -757,8 +745,7 @@ select:focus-visible {
   top: 596px;
   transform: translateX(-50%);
   background: var(--surface);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
+  border: 4px solid var(--accent);
   padding: 6px 14px;
   font-size: 15px;
   z-index: 25;
@@ -770,9 +757,8 @@ select:focus-visible {
   top: 60px;
   transform: translateX(-50%);
   background: var(--surface-2);
-  border: 1px solid var(--danger);
+  border: 4px solid var(--danger);
   color: var(--text);
-  border-radius: var(--radius);
   padding: 6px 14px;
   z-index: 40;
   animation: toast 2.2s ease forwards;
@@ -795,7 +781,7 @@ select:focus-visible {
   font-size: 44px;
   z-index: 35;
   pointer-events: none;
-  text-shadow: 0 3px 0 var(--bg);
+  text-shadow: 0px 4px 0 var(--bg);
   animation: banner 1.6s ease forwards;
 }
 @keyframes banner {
@@ -819,9 +805,8 @@ select:focus-visible {
 }
 .program {
   font-size: 12px;
-  border: 1px solid var(--accent-2);
+  border: 4px solid var(--accent-2);
   color: var(--accent-2);
-  border-radius: 3px;
   padding: 0 5px;
 }
 
@@ -843,12 +828,11 @@ select:focus-visible {
 }
 .tip {
   background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border: 4px solid var(--line);
   padding: 8px 10px;
   font-size: 14px;
   line-height: 1.45;
-  box-shadow: var(--shadow);
+  box-shadow: none;
 }
 .tip b {
   font-family: var(--font-display);
@@ -878,54 +862,44 @@ select:focus-visible {
   top: 44px;
   bottom: 0;
   width: 380px;
-  border-left: 1px solid var(--line);
+  border-left: 4px solid var(--line);
   padding: 18px;
   overflow-y: auto;
 }
 .map-node {
   position: absolute;
-  width: 54px;
-  height: 54px;
-  margin: -27px 0 0 -27px;
-  border-radius: 50%;
-  background: var(--surface-2);
-  border: 2px solid var(--line);
   display: grid;
   place-items: center;
   font-family: var(--font-display);
-  font-size: 13px;
-  color: var(--text);
   padding: 0;
 }
 .map-node.reach {
-  border-color: var(--accent);
   cursor: pointer;
 }
-.map-node.done {
-  opacity: 0.45;
+.tok {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: var(--spr-tok-0) 0 0 / 100% 100%;
+  image-rendering: pixelated;
 }
-.map-node.here {
-  background: var(--accent);
-  color: var(--accent-text);
+.tok.t1 {
+  background-image: var(--spr-tok-1);
+}
+.tok.t0.locked {
+  background-image: var(--spr-tok-0-locked);
+}
+.tok.t1.locked {
+  background-image: var(--spr-tok-1-locked);
 }
 .map-node .tok {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--bg);
-  top: -6px;
+  top: -4px;
 }
 .map-node .tok.t0 {
   left: -4px;
-  background: var(--seat-0);
 }
 .map-node .tok.t1 {
   right: -4px;
-  background: var(--seat-1);
-}
-.map-node .tok.locked {
-  box-shadow: 0 0 0 2px var(--text);
 }
 .node-screen {
   position: absolute;
@@ -988,7 +962,7 @@ select:focus-visible {
   transform: scale(0.5);
 }
 .deck-grid .offer.sel {
-  outline: 3px solid var(--accent);
+  outline: 4px solid var(--accent);
 }
 .event-box {
   max-width: 900px;
@@ -1018,20 +992,15 @@ select:focus-visible {
   color: var(--muted);
 }
 .event-opt .tok {
-  position: absolute;
-  top: 10px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
+  top: 8px;
 }
 .coin {
   position: absolute;
   left: 50%;
   top: 340px;
-  transform: translateX(-50%);
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
+  margin-left: -68px;
+  width: 136px;
+  height: 136px;
   display: grid;
   place-items: center;
   font-family: var(--font-display);
@@ -1039,18 +1008,6 @@ select:focus-visible {
   border: 4px solid var(--candle);
   background: var(--surface-2);
   z-index: 45;
-  animation: coin-flip 1.4s ease;
-}
-@keyframes coin-flip {
-  0% {
-    transform: translateX(-50%) rotateY(0) translateY(0);
-  }
-  50% {
-    transform: translateX(-50%) rotateY(1080deg) translateY(-120px);
-  }
-  100% {
-    transform: translateX(-50%) rotateY(1800deg) translateY(0);
-  }
 }
 .relic-list {
   display: flex;
@@ -1059,8 +1016,7 @@ select:focus-visible {
 }
 .relic {
   font-size: 13px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border: 4px solid var(--line);
   padding: 2px 8px;
   background: var(--surface);
   cursor: help;
@@ -1076,8 +1032,7 @@ select:focus-visible {
   max-height: 840px;
   overflow-y: auto;
   background: var(--surface);
-  border: 1px solid var(--accent-2);
-  border-radius: var(--radius);
+  border: 4px solid var(--accent-2);
   padding: 10px;
   z-index: 70;
   font-size: 13px;
@@ -1104,8 +1059,7 @@ select:focus-visible {
 .debug-panel .list {
   max-height: 160px;
   overflow-y: auto;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border: 4px solid var(--line);
 }
 .debug-panel .list div {
   padding: 2px 6px;
@@ -1122,28 +1076,35 @@ select:focus-visible {
   font-size: 11px;
   background: var(--bg);
   color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border: 4px solid var(--line);
 }
 
 .ping-mark {
   position: absolute;
-  width: 60px;
-  height: 60px;
-  margin: -30px 0 0 -30px;
-  border: 3px solid var(--accent-2);
-  border-radius: 50%;
+  width: 136px;
+  height: 136px;
+  margin: -68px 0 0 -68px;
+  background: var(--spr-ping) 0 0 / 400% 100%;
+  image-rendering: pixelated;
   pointer-events: none;
   z-index: 45;
-  animation: ping 1.8s ease-out forwards;
+  animation: ping 0.6s steps(1) 3 forwards;
 }
 @keyframes ping {
   0% {
-    transform: scale(0.4);
-    opacity: 1;
+    background-position: 0 0;
+  }
+  25% {
+    background-position: 33.333% 0;
+  }
+  50% {
+    background-position: 66.667% 0;
+  }
+  75% {
+    background-position: 100% 0;
   }
   100% {
-    transform: scale(2.2);
+    background-position: 100% 0;
     opacity: 0;
   }
 }

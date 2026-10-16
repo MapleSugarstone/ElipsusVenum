@@ -13,7 +13,12 @@ const PAL: Record<string, string> = {
   v: '#d0beff', u: '#9a88d0', n: '#5e4c8e',
   p: '#e3dcc4', q: '#b8ae86',
   t: '#2a2a2a', j: '#3d3d3d',
+  B: '#7aa7ff', D: '#3d5fa8', G: '#a6e34a', E: '#5c8a1c', W: '#ffffff',
+  K: 'rgba(0, 0, 0, 0.35)',
 };
+
+const token = (hi: string, lo: string, rim: string): string[] =>
+  ['...k...', '..kBk..', '.kBBDk.', 'kBBBBDk', '.kBBDk.', '..kDk..', '...k...'].map((r) => r.replace(/k/g, rim).replace(/B/g, hi).replace(/D/g, lo));
 
 /** Frames side by side: each sprite is a list of frames, each frame a list of equal-length rows. */
 const SPRITES: Record<string, string[][]> = {
@@ -37,6 +42,13 @@ const SPRITES: Record<string, string[][]> = {
   'halo-far': [['f...', '..f.', '.f..', '...f']],
   back: [cardBack('n', 'u', 'v')],
   'back-side': [cardBack('d', 'a', 'f')],
+  'tok-0': [token('B', 'D', 'k')],
+  'tok-1': [token('G', 'E', 'k')],
+  'tok-0-locked': [token('B', 'D', 'W')],
+  'tok-1-locked': [token('G', 'E', 'W')],
+  hatch: [['KK..', '.KK.', '..KK', 'K..K']],
+  coin: [coinFace(16), coinFace(10), coinFace(2.5), coinFace(10)],
+  ping: [ring(5, 0), ring(9, 0), ring(13, 1), ring(16, 2)],
   tooth: [['kkkkk', 'kyffk', 'kfffk', '.kak.', '..k..']],
   'bead-on': [['.k.', 'kyk', 'kfk', '.k.']],
   'bead-off': [['.k.', 'kak', 'kdk', '.k.']],
@@ -77,6 +89,47 @@ function cardBack(a: string, b: string, ring: string): string[] {
       else if (r < 1.35) row += 'k';
       else row += (x + y) % 2 ? a : b;
     }
+    rows.push(row);
+  }
+  return rows;
+}
+
+/** Marks the pixels of a 34 by 34 ellipse that touch its outside, so the outline is one clean pixel wide. */
+function ellipse(rx: number, ry: number): { inside: (x: number, y: number) => boolean; edge: (x: number, y: number) => boolean } {
+  const c = 16.5;
+  const inside = (x: number, y: number) => ((x - c) / rx) ** 2 + ((y - c) / ry) ** 2 <= 1;
+  const edge = (x: number, y: number) => inside(x, y) && (!inside(x + 1, y) || !inside(x - 1, y) || !inside(x, y + 1) || !inside(x, y - 1));
+  return { inside, edge };
+}
+
+/** One frame of the coin turning, `rx` art pixels from its middle to its side. */
+function coinFace(rx: number): string[] {
+  const { inside, edge } = ellipse(rx, 16);
+  const rows: string[] = [];
+  for (let y = 0; y < 34; y++) {
+    let row = '';
+    for (let x = 0; x < 34; x++) {
+      const dx = (x - 16.5) / rx, dy = (y - 16.5) / 16, r = dx * dx + dy * dy;
+      if (!inside(x, y)) row += '.';
+      else if (edge(x, y)) row += 'k';
+      else if (r > 0.72 || rx < 4) row += 'a';
+      else if (r > 0.6) row += 'k';
+      else if (dx + dy < -0.55) row += (x + y) % 2 ? 'y' : 'f';
+      else if (dx + dy > 0.7) row += 'o';
+      else row += 'f';
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+/** One frame of a pointing ring, thinned to every second or every third pixel as it widens. */
+function ring(r: number, thin: number): string[] {
+  const { edge } = ellipse(r, r);
+  const rows: string[] = [];
+  for (let y = 0; y < 34; y++) {
+    let row = '';
+    for (let x = 0; x < 34; x++) row += edge(x, y) && (thin === 0 || (x + y) % (thin + 1) === 0) ? 'v' : '.';
     rows.push(row);
   }
   return rows;

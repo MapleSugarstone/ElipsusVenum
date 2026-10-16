@@ -317,7 +317,7 @@ export class NodeScreen {
           },
         }, h('b', {}, o.label), tipText(o.text));
         e.votes.forEach((v, seat) => {
-          if (v === i) btn.append(h('span', { class: 'tok', style: { right: `${10 + seat * 20}px`, background: `var(--seat-${seat})`, boxShadow: e.locks[seat] ? '0 0 0 2px var(--text)' : '' } }));
+          if (v === i) btn.append(h('span', { class: `tok t${seat} ${e.locks[seat] ? 'locked' : ''}`, style: { right: `${8 + seat * 32}px` } }));
         });
         box.append(btn);
       });

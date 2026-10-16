@@ -68,13 +68,13 @@ export interface FullCardOpts {
 
 /**
  * The art window for a card shown at scale `k`. The window shrinks to a whole number of art pixels inside a box of
- * boxW by boxH card units, and the art is drawn at exactly that many pixels.
+ * boxW by boxH card units, and the art is drawn at exactly that many pixels. The frame around it is one art pixel wide.
  */
 function artHtml(cls: string, id: string, boxW: number, boxH: number, k: number): string {
-  const w = Math.floor((boxW * k) / ART);
-  const hgt = Math.floor((boxH * k) / ART);
-  const cw = (w * ART) / k + 2;
-  const ch = (hgt * ART) / k + 2;
+  const w = Math.floor((boxW * k - 2 * ART) / ART);
+  const hgt = Math.floor((boxH * k - 2 * ART) / ART);
+  const cw = ((w + 2) * ART) / k;
+  const ch = ((hgt + 2) * ART) / k;
   return `<div class="${cls}" style="background-image:url(${artFor(id, w, hgt)});width:${cw}px;height:${ch}px;left:calc(50% - ${cw / 2}px)"></div>`;
 }
 

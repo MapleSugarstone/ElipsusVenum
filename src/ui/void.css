@@ -33,7 +33,7 @@
 
 .topbar {
   background: var(--veil);
-  border-bottom: 1px solid #2c2440;
+  border-bottom: 4px solid #2c2440;
 }
 .topbar .dealer {
   color: var(--accent-2);
@@ -47,24 +47,22 @@
 .event-box,
 .setup-screen > .char-row {
   background: var(--veil);
-  border: 1px solid #2c2440;
+  border: 4px solid #2c2440;
   padding: 16px 20px;
-  border-radius: 26px 14px 30px 12px / 16px 28px 14px 30px;
 }
 .map-side {
   background: var(--veil);
-  border-left: 1px solid #2c2440;
+  border-left: 4px solid #2c2440;
 }
 .seat-panel {
-  background: linear-gradient(to bottom, rgba(6, 8, 1, 0.55), rgba(6, 8, 1, 0.9));
-  border-top: 1px solid #2c2440;
+  background: rgba(6, 8, 1, 0.78);
+  border-top: 4px solid #2c2440;
 }
 button {
-  border-radius: 9px 5px 10px 4px / 5px 10px 4px 9px;
   transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
 }
 button.primary {
-  box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(212, 186, 0, 0.25);
+  box-shadow: none;
 }
 h1,
 h2,
@@ -74,7 +72,7 @@ h3 {
 .setup-screen h2,
 .node-screen h2 {
   color: var(--accent);
-  text-shadow: 3px 3px 0 #2a1f45;
+  text-shadow: 4px 4px 0 #2a1f45;
 }
 
 /* ---------------------------------------------------------------- title */
@@ -82,7 +80,7 @@ h3 {
 .title-screen h1 {
   font-size: 104px;
   color: var(--accent);
-  text-shadow: 5px 5px 0 #2a1f45, -2px -2px 0 rgba(208, 190, 255, 0.25);
+  text-shadow: 4px 4px 0 #2a1f45, -4px -4px 0 rgba(208, 190, 255, 0.25);
   line-height: 0.95;
 }
 .title-screen .sub {
@@ -91,7 +89,6 @@ h3 {
   font-size: 17px;
   background: var(--veil);
   padding: 10px 14px;
-  border-radius: 14px 6px 16px 4px;
 }
 
 /* ---------------------------------------------------------------- cards */
@@ -103,8 +100,7 @@ h3 {
   background-image: linear-gradient(rgba(207, 198, 168, 0.9), rgba(207, 198, 168, 0.9)), var(--grain);
   /* One grain pixel is one art pixel at whatever scale the card is shown. */
   background-size: auto, calc(640px / var(--k, 1)) calc(640px / var(--k, 1));
-  box-shadow: inset 0 0 22px rgba(40, 28, 8, 0.6), 0 7px 0 rgba(0, 0, 0, 0.55);
-  border-radius: 12px 7px 13px 6px / 8px 12px 7px 13px;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.55);
 }
 .card.pool-enemy,
 .mini.pool-enemy {
@@ -114,8 +110,7 @@ h3 {
 }
 .card .c-art,
 .mini .m-art {
-  border-radius: 6px 3px 7px 4px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+  box-shadow: none;
 }
 .card .c-name,
 .mini .m-name {
@@ -132,8 +127,8 @@ h3 {
 }
 .hand .card.picked {
   --lift: -32px;
-  outline: 4px solid var(--accent);
-  box-shadow: 0 0 22px rgba(212, 186, 0, 0.45), inset 0 0 22px rgba(40, 28, 8, 0.6);
+  outline: calc(4px / var(--k, 1)) solid var(--accent);
+  box-shadow: none;
 }
 .mini {
   transform: none;
@@ -148,8 +143,8 @@ h3 {
   display: none;
 }
 .mini.target {
-  outline: 3px solid var(--accent);
-  box-shadow: 0 0 18px rgba(212, 186, 0, 0.5);
+  outline: 4px solid var(--accent);
+  box-shadow: none;
 }
 .mini.lunge-up {
   animation: lunge-up 0.34s steps(6);
@@ -225,15 +220,14 @@ h3 {
   }
 }
 .slot {
-  border: 1px dashed rgba(208, 190, 255, 0.16);
-  border-radius: 14px 8px 16px 6px / 8px 14px 6px 16px;
+  border: 4px dashed rgba(208, 190, 255, 0.16);
 }
 .slot.live {
   border-color: var(--accent);
   background: rgba(212, 186, 0, 0.1);
 }
 .seam {
-  border-left: 2px dotted rgba(208, 190, 255, 0.35);
+  border-left: 4px dashed rgba(208, 190, 255, 0.35);
 }
 .row-label {
   color: var(--accent-2);
@@ -244,7 +238,6 @@ h3 {
 
 .scale {
   background: var(--veil);
-  border-radius: 24px 10px 26px 8px / 12px 24px 10px 26px;
   padding: 10px 0;
 }
 .teeth {
@@ -258,26 +251,23 @@ h3 {
 .tooth {
   width: 30px;
   height: 14px;
-  border-radius: 3px 3px 9px 9px;
   background: rgba(235, 241, 228, 0.07);
-  border: 1px solid rgba(235, 241, 228, 0.12);
+  border: 4px solid rgba(235, 241, 228, 0.12);
 }
 .tooth.win {
   background: var(--candle);
   border-color: #fff3a0;
-  box-shadow: 0 0 6px rgba(255, 207, 58, 0.45);
+  box-shadow: none;
 }
 .tooth.loss {
   background: var(--blood);
   border-color: #ff6b5e;
-  border-radius: 9px 9px 3px 3px;
 }
 .tooth.mid {
   height: 3px;
   width: 44px;
   background: var(--accent-2);
   border: none;
-  border-radius: 2px;
 }
 .scale .s-val {
   color: var(--accent);
@@ -289,13 +279,13 @@ h3 {
   font-family: var(--font-display);
   font-size: 58px;
   color: var(--accent);
-  text-shadow: 4px 4px 0 #2a1f45, 0 0 24px rgba(0, 0, 0, 0.9);
+  text-shadow: 4px 4px 0 #2a1f45;
   letter-spacing: 1px;
 }
 .float-num {
   font-family: var(--font-display);
   font-size: 34px;
-  text-shadow: 3px 3px 0 #000;
+  text-shadow: 4px 4px 0 #000;
   animation: float-jitter 0.85s steps(8) forwards;
 }
 @keyframes float-jitter {
@@ -303,28 +293,25 @@ h3 {
     transform: translate(0, 0) scale(1.4);
   }
   20% {
-    transform: translate(-3px, -14px) scale(1);
+    transform: translate(-4px, -16px) scale(1);
   }
   100% {
-    transform: translate(2px, -50px);
+    transform: translate(4px, -52px);
     opacity: 0;
   }
 }
 .prompt {
   background: var(--veil);
-  border: 1px solid var(--accent);
+  border: 4px solid var(--accent);
   color: var(--accent);
   font-family: var(--font-mono);
-  border-radius: 12px 6px 14px 4px;
 }
 .toast {
   font-family: var(--font-mono);
-  border-radius: 12px 6px 14px 4px;
 }
 .tip {
   background: var(--veil);
-  border: 1px solid #2c2440;
-  border-radius: 14px 6px 16px 4px;
+  border: 4px solid #2c2440;
 }
 .tip b {
   color: var(--accent);
@@ -332,47 +319,79 @@ h3 {
 
 /* ---------------------------------------------------------------- map */
 
-/* A node is a 16 by 16 painting at one art pixel per 4 units, so it never resamples. The boil filter would warp it. */
+/* A node is a two-frame sprite at one art pixel per 4 units, so it never resamples. The boil filter would warp it. */
 .map-node {
-  width: 64px;
-  height: 64px;
-  margin: -32px 0 0 -32px;
-  border-radius: 52% 44% 56% 46% / 46% 56% 44% 54%;
-  background-size: 100% 100%;
-  background-origin: border-box;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+  background-color: transparent;
+  background-size: 200% 100%;
+  background-position: 0 0;
   image-rendering: pixelated;
-  border: 2px solid #2c2440;
+  border: 0;
+  box-shadow: none;
+  outline: none;
+  filter: drop-shadow(4px 4px 0 #000);
   color: #fff;
-  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  text-shadow: 4px 4px 0 #000;
   font-size: 12px;
-  filter: saturate(0.55) brightness(calc(0.65 * var(--lit, 1)));
-  transition: transform 0.12s steps(2), filter 0.12s ease;
 }
-/* The dungeon painting is mostly unlit brick at this size. */
-.map-node.k-battle {
-  --lit: 1.8;
+.map-node.k-boss {
+  width: 104px;
+  height: 104px;
+  margin: -52px 0 0 -52px;
 }
 .map-node.reach {
-  border-color: var(--accent);
-  filter: brightness(var(--lit, 1));
-  box-shadow: 0 0 18px rgba(212, 186, 0, 0.45);
+  animation: node-halo 0.5s steps(1) infinite;
 }
 .map-node.reach:hover {
   transform: translateY(-8px);
 }
-.map-node.here {
-  border-color: var(--accent-2);
-  filter: brightness(var(--lit, 1));
-  box-shadow: 0 0 22px rgba(208, 190, 255, 0.6);
-  background-color: transparent;
-}
 .map-node.done {
   opacity: 0.35;
 }
+@keyframes node-halo {
+  0% {
+    background-position: 0 0;
+  }
+  50% {
+    background-position: 100% 0;
+  }
+}
 .coin {
-  border-color: var(--accent);
-  background: radial-gradient(circle at 35% 35%, #fff3a0, var(--accent) 45%, #6b5a00);
+  border: 0;
+  background: var(--spr-coin) 0 0 / 400% 100%;
+  image-rendering: pixelated;
   color: var(--accent-text);
   font-weight: bold;
+  animation: coin-spin 0.32s steps(1) 4, coin-hop 1.28s;
+}
+/* The coin rises and falls in 16-unit steps so it stays on the grid. */
+@keyframes coin-hop {
+  0% {
+    transform: translateY(0);
+    animation-timing-function: steps(8);
+  }
+  50% {
+    transform: translateY(-128px);
+    animation-timing-function: steps(8);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+@keyframes coin-spin {
+  0% {
+    background-position: 0 0;
+  }
+  25% {
+    background-position: 33.333% 0;
+  }
+  50% {
+    background-position: 66.667% 0;
+  }
+  75% {
+    background-position: 100% 0;
+  }
 }
 
