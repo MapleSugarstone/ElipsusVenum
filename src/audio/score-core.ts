@@ -1,9 +1,13 @@
 // The score framework: section types, a seeded generator, keys and figures, and automatic variation.
-// Ported from the chiptune skill reference. The tracks themselves live in tracks.ts.
-// Pitches are MIDI numbers (57 is A3, 220 Hz). Times and lengths are in quarter-note beats.
+// The tracks themselves live in tracks.ts. Pitches are MIDI numbers (57 is A3, 220 Hz). Times and lengths are in
+// quarter-note beats.
 
-export type Voice = 'p1' | 'p2' | 'tri' | 'nz' | 'bell' | 'air';
-export type Nz = 'hat' | 'snare' | 'kick' | 'tick' | 'tock' | 'sweep' | 'rush' | 'stamp';
+/**
+ * The band. `lead` is the warm played lead and `cold` the narrow sequenced one, `bell` and `glass` are the warm and
+ * cold FM bells, `drone` is additive, `pad` and `brass` are detuned saw sections, and `choir` sings through formants.
+ */
+export type Voice = 'lead' | 'cold' | 'bell' | 'glass' | 'arp' | 'bass' | 'sub' | 'drone' | 'pad' | 'brass' | 'choir' | 'blip' | 'nz';
+export type Nz = 'kick' | 'snare' | 'taiko' | 'tick' | 'hiss' | 'swell' | 'glitch' | 'scan' | 'boom';
 
 export interface Ev {
   t: number;
@@ -11,8 +15,6 @@ export interface Ev {
   v: Voice;
   n: number;
   g: number;
-  /** Pulse duty: 0 is 12.5%, 1 is 25%, 2 is 50%, 3 is 37.5%. */
-  duty?: number;
   /** Glide in semitones across the second half of the note. */
   bend?: number;
   /** Detune in cents. */
@@ -24,8 +26,14 @@ export interface Ev {
   /** Plays only when intensity is below this. */
   top?: number;
   nz?: Nz;
-  /** FM ratio for the bell. */
+  /** FM ratio for a bell. */
   ratio?: number;
+  /** Filter cutoff in Hz, for voices that have one. */
+  cut?: number;
+  /** Choir vowel from oo (0) to ah (1). */
+  ah?: number;
+  /** Stereo position from -1 to 1. */
+  pan?: number;
   /** Melodic: open to automatic ornaments and displacement. */
   m?: 1;
 }
@@ -66,10 +74,14 @@ export interface TrackDef {
   wrong?: number;
   /** Level per voice, multiplied into the engine's base level. */
   mix?: Partial<Record<Voice, number>>;
+  /** Send to the dotted-eighth echo. */
   echo?: number;
+  /** Send to the long room. */
+  verb?: number;
+  /** Depth of the shared tape drift in cents. */
   wobble?: number;
-  /** Detune of p2 against p1 in cents. */
-  spread?: number;
+  /** Output gain of the whole track, so places sit quieter than fights. */
+  level?: number;
 }
 
 export class Rng {
@@ -179,6 +191,8 @@ export class B {
   }
 }
 
+const SHORT_ACC: ReadonlySet<Voice> = new Set<Voice>(['arp', 'bell', 'glass', 'blip']);
+
 // Automatic variation: ornaments, octave displacement, dropped notes, rhythmic displacement.
 export function vary(sec: Section, r: Rng, amt: number): Section {
   if (amt <= 0 || sec.still) return sec;
@@ -186,11 +200,13 @@ export function vary(sec: Section, r: Rng, amt: number): Section {
   let first = true;
   for (const e of sec.ev) {
     if (!e.m) {
-      // Accompaniment varies too, in ways that cannot break the harmony: a dropped note, an octave, a missing hat.
-      if (e.v === 'nz') { if ((e.nz === 'hat' || e.nz === 'tick') && r.chance(0.07 * amt)) continue; out.push(e); continue; }
-      if (e.d < 1.5 && e.v !== 'tri' && r.chance(0.05 * amt)) continue;
+      // Accompaniment varies too, in ways that cannot break the harmony: a dropped note, an octave, a missing tick.
+      // Held harmony and the low end never change.
+      if (e.v === 'nz') { if (e.nz === 'tick' && r.chance(0.07 * amt)) continue; out.push(e); continue; }
+      if (!SHORT_ACC.has(e.v) || e.d >= 1.5) { out.push(e); continue; }
+      if (r.chance(0.05 * amt)) continue;
       const x: Ev = { ...e };
-      if (e.d < 1.5 && r.chance(0.05 * amt)) x.n += e.v === 'tri' ? (x.n < 40 ? 12 : -12) : x.n < 70 ? 12 : -12;
+      if (r.chance(0.05 * amt)) x.n += x.n < 70 ? 12 : -12;
       out.push(x);
       continue;
     }
@@ -234,7 +250,7 @@ export function wrong(sec: Section, r: Rng): Section {
     }
     beats += gap;
   } else if (kind === 'tritone') {
-    for (const e of ev) if (e.v !== 'nz' && e.t >= lo && e.t < hi) e.n += 6;
+    for (const e of ev) if (e.v !== 'nz' && e.v !== 'drone' && e.v !== 'sub' && e.t >= lo && e.t < hi) e.n += 6;
   } else if (kind === 'bend') {
     let best: Ev | null = null;
     for (const e of ev) if (e.m && (!best || e.d > best.d)) best = e;
