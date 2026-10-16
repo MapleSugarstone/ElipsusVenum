@@ -83,6 +83,40 @@ export interface SeatState {
   items: (string | null)[];
   /** Stat changes to deck cards that last for the rest of the run, applied when the battle ends. */
   perm: { d: number; dp: number; dh: number }[];
+  /** Effects waiting for a later turn. `turns` counts down at the start of each turn and the effect runs at 1. */
+  later: Later[];
+}
+
+export interface Later {
+  a: string;
+  p: Num;
+  tg: SlotRef[];
+  turns: number;
+}
+
+/** A lasting effect on a lane, placed by a seat. Its ability's text names it before the first period. */
+export interface Terrain {
+  a: string;
+  p: Num;
+  seat: Seat;
+}
+
+/** One option of a pending choice: a card already in the battle, or a new card by id. */
+export interface ChoiceOption {
+  uid?: number;
+  id: string;
+  up?: boolean;
+}
+
+/** A card that paused to let its player choose. Until they do, that seat can only choose. */
+export interface Choice {
+  seat: Seat;
+  options: ChoiceOption[];
+  /** The ability whose `chosen` hook resolves the pick. */
+  a: string;
+  p: Num;
+  tg: SlotRef[];
+  prompt: string;
 }
 
 export interface Placement {
@@ -116,6 +150,9 @@ export interface Battle {
   marks: number[];
   /** Ability ids of house rules the opponent announced for this battle. */
   rules: string[];
+  /** One terrain per lane at most. Older saves may lack this. */
+  terrain?: (Terrain | null)[];
+  choice?: Choice | null;
 }
 
 export type BattleAction =
@@ -124,7 +161,8 @@ export type BattleAction =
   | { t: 'ring' }
   | { t: 'unring' }
   | { t: 'item'; slot: number; tg?: SlotRef[] }
-  | { t: 'ghost'; kind: 'bone' | 'mark'; tg?: SlotRef };
+  | { t: 'ghost'; kind: 'bone' | 'mark'; tg?: SlotRef }
+  | { t: 'choose'; i: number };
 
 export interface Ev {
   k: string;

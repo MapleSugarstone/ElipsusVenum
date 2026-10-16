@@ -11,7 +11,7 @@ import { hoverTip } from './hud.ts';
 import { grid } from './grid.ts';
 import type { App } from './app.ts';
 import type { Presence, Update } from './session.ts';
-import { boardView, type BoardView, type CardView } from './view.ts';
+import { boardView, terrainView, type BoardView, type CardView } from './view.ts';
 import { sfx } from '../audio/sfx.ts';
 import { music } from '../audio/music.ts';
 
@@ -115,6 +115,7 @@ export class BattleScreen {
 
   destroy(): void {
     this.dead = true;
+    this.choiceEl?.remove();
     this.queue = [];
     window.removeEventListener('keydown', this.keyHandler);
     this.endDrag();
@@ -307,6 +308,39 @@ export class BattleScreen {
         await wait(120);
         return;
       }
+      case 'terrain': {
+        const lane = ev.lane as number;
+        if (ev.a) floatNum(this.root, laneX(lane) + 40, ROW_Y.p + 150, terrainView(ev.a as string, {}).name, 'good');
+        sfx('place');
+        await wait(220);
+        return;
+      }
+      case 'bond': {
+        for (const uid of [ev.a, ev.b] as number[]) {
+          const at = this.center(uid);
+          if (at) floatNum(this.root, at.x, at.y, 'Bond', 'good');
+        }
+        sfx('card');
+        await wait(220);
+        return;
+      }
+      case 'bondShare': {
+        const at = this.center(ev.to as number);
+        if (at) floatNum(this.root, at.x, at.y - 30, 'Shared', '');
+        return;
+      }
+      case 'later':
+        floatNum(this.root, (ev.seat as Seat) === 0 ? 400 : 1200, 600, 'Next turn', 'good');
+        await wait(150);
+        return;
+      case 'laterDue':
+        banner(this.root, ability(ev.a as string).text.split('.')[0], 'var(--accent-2)');
+        await wait(450);
+        return;
+      case 'upgrade':
+        sfx('card');
+        await wait(120);
+        return;
       case 'coin':
         return;
       default:
@@ -328,7 +362,34 @@ export class BattleScreen {
     this.renderPanels();
     this.renderPrompt();
     this.renderRules();
+    this.renderChoice();
     if (this.sel) this.highlight();
+  }
+
+  private choiceEl: HTMLDivElement | null = null;
+  /** A sheet of options while one of this screen's seats has a choice to make. */
+  private renderChoice(): void {
+    this.choiceEl?.remove();
+    this.choiceEl = null;
+    const ch = this.b.choice;
+    if (!ch || !this.mine.includes(ch.seat) || this.b.over) return;
+    const s = this.b.seats[ch.seat];
+    const find = (uid: number) => [...s.hand, ...s.deck, ...s.discard, ...this.b.seats[other(ch.seat)].hand].find((x) => x.uid === uid);
+    const sheet = h('div', { class: 'deck-view choice-view' },
+      h('div', { class: 'deck-head' }, h('h2', {}, this.app.solo() ? `${this.charName(ch.seat)}: ${ch.prompt}` : ch.prompt)));
+    const row = h('div', { class: 'deck-grid' });
+    ch.options.forEach((o, i) => {
+      const inst = o.uid !== undefined ? find(o.uid) : undefined;
+      const el = inst
+        ? fullCard(inst.id, { up: inst.up, ab: inst.ab, power: inst.power, health: inst.health, maxHealth: inst.maxHealth, cost: inst.cost, scale: 0.6 })
+        : fullCard(o.id, { up: o.up, scale: 0.6 });
+      const cell = h('div', { class: 'offer', style: { width: '168px', height: '235px' }, onclick: () => this.act(ch.seat, { t: 'choose', i }) }, el);
+      inspectable(cell, () => (inst ? { id: inst.id, opts: { up: inst.up, ab: inst.ab, power: inst.power, health: inst.health } } : { id: o.id, opts: { up: o.up } }));
+      row.append(cell);
+    });
+    sheet.append(row);
+    this.root.append(sheet);
+    this.choiceEl = sheet;
   }
 
   private rulesEl: HTMLDivElement | null = null;
@@ -389,7 +450,23 @@ export class BattleScreen {
         this.minis.delete(uid);
       }
     }
+    this.renderTerrain(v);
     this.highlight();
+  }
+
+  private terrainEls: HTMLDivElement[] = [];
+  /** A strip under each lane that has terrain, naming it, with its rules on hover. */
+  private renderTerrain(v: BoardView): void {
+    for (const el of this.terrainEls) el.remove();
+    this.terrainEls = [];
+    (v.terrain ?? []).forEach((t, lane) => {
+      this.slots.get(`p${lane}`)?.classList.toggle('has-terrain', !!t);
+      if (!t) return;
+      const el = h('div', { class: `terrain-strip t-${t.a.replace(/[^a-z0-9]+/gi, '-')}`, style: { left: `${laneX(lane)}px`, top: `${ROW_Y.p + 190}px` } }, t.name);
+      hoverTip(el, t.name, t.text);
+      this.board.append(el);
+      this.terrainEls.push(el);
+    });
   }
 
   private findView(uid: number): CardView | null {
@@ -501,6 +578,17 @@ export class BattleScreen {
         hoverTip(chip, 'Power', text);
         chips.append(chip);
       }
+      for (const l of s.later ?? []) {
+        const what = ability(l.a).text.split('.')[0];
+        const chip = h('span', { class: 'chip-later' }, l.turns > 1 ? `In ${l.turns} turns` : 'Next turn');
+        hoverTip(chip, l.turns > 1 ? `In ${l.turns} turns` : 'Next turn', `${what}.`);
+        chips.append(chip);
+      }
+      if ((s.c.cardsTurn ?? 0) > 0) {
+        const chip = h('span', { class: 'chip-combo' }, `Played ${s.c.cardsTurn}`);
+        hoverTip(chip, 'Played this turn', `${s.c.cardsTurn ?? 0} cards, ${s.c.spellsTurn ?? 0} of them spells. Cards that count plays read this.`);
+        chips.append(chip);
+      }
       if (chips.childElementCount) res.append(chips);
       const wantDraw = mineSeat && needsDraw(b, seat) && !b.over;
       const piles = h('div', { class: 'r-piles' });
@@ -526,8 +614,9 @@ export class BattleScreen {
       });
       if (s.items.some(Boolean)) res.append(items);
       if (mineSeat && !this.app.solo()) {
-        const state = s.rung ? 'rung' : !s.drew || b.over !== null ? 'off' : 'ready';
-        const [main, sub] = s.rung ? ['Waiting', 'Click to take back'] : state === 'off' ? ['Draw first', 'Deck or Side'] : ['End turn', 'Space'];
+        const choosing = b.choice?.seat === seat;
+        const state = s.rung ? 'rung' : !s.drew || b.over !== null || choosing ? 'off' : 'ready';
+        const [main, sub] = s.rung ? ['Waiting', 'Click to take back'] : choosing ? ['Choose first', 'Pick an option'] : state === 'off' ? ['Draw first', 'Deck or Side'] : ['End turn', 'Space'];
         this.root.append(this.bell(state, () => this.act(seat, { t: s.rung ? 'unring' : 'ring' }), main, sub, state === 'ready' && !this.canPlayAny([seat])));
       }
       if (!mineSeat && s.rung) res.append(h('div', { class: 'r-rung' }, 'Rang the bell'));
@@ -539,7 +628,9 @@ export class BattleScreen {
     if (this.app.solo()) {
       const allDrew = b.seats.every((x) => !x.alive || x.drew);
       const live = this.mine.filter((x) => b.seats[x].alive);
-      this.soloBell = this.bell(allDrew && b.over === null ? 'ready' : 'off', () => this.ringAll(), allDrew ? 'End turn' : 'Draw first', allDrew ? 'Space' : 'Deck or Side', allDrew && !this.canPlayAny(live));
+      const choosing = !!b.choice;
+      const go = allDrew && b.over === null && !choosing;
+      this.soloBell = this.bell(go ? 'ready' : 'off', () => this.ringAll(), choosing ? 'Choose first' : allDrew ? 'End turn' : 'Draw first', choosing ? 'Pick an option' : allDrew ? 'Space' : 'Deck or Side', go && !this.canPlayAny(live));
       this.soloBell.classList.add('solo');
       this.root.append(this.soloBell);
     }
@@ -614,7 +705,7 @@ export class BattleScreen {
       const picked = this.sel?.kind === 'card' && this.sel.uid === c.uid;
       const cost = costOf(this.b, seat, c);
       const cant = s.energy < cost.energy || s.bones < cost.bones || hasKw(c, 'Unplayable');
-      const el = fullCard(c.id, { up: c.up, ab: c.ab, power: c.power, health: c.health, maxHealth: c.maxHealth, cost: c.cost, k: scale, cls: `${picked ? 'picked' : ''} ${cant ? 'cant' : ''}` });
+      const el = fullCard(c.id, { up: c.up, ab: c.ab, power: c.power, health: c.health, maxHealth: c.maxHealth, cost: costOf(this.b, seat, c), k: scale, cls: `${picked ? 'picked' : ''} ${cant ? 'cant' : ''}` });
       el.style.setProperty('--s', String(scale));
       el.style.left = `${i * step}px`;
       el.style.top = picked ? '-14px' : '8px';

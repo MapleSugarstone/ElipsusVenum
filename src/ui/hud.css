@@ -1089,3 +1089,109 @@ html {
   height: 24px;
   background-image: var(--spr-cost-energy);
 }
+
+/* ---------------------------------------------------------------- upgrade preview */
+
+.up-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 4px 0 10px;
+}
+.up-label {
+  font-family: var(--font-display);
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent-2);
+  margin-bottom: 4px;
+}
+.spr-arrow {
+  width: 28px;
+  height: 28px;
+  background-image: var(--spr-arrow);
+  background-size: 100% 100%;
+}
+.up-none {
+  color: var(--muted);
+}
+.card .c-text p.changed,
+.card .c-stats.changed span,
+.card .c-cost.changed {
+  background: rgba(0, 213, 118, 0.32);
+  outline: 2px solid #00d576;
+}
+
+/* ---------------------------------------------------------------- terrain, choices, and chips */
+
+.terrain-strip {
+  position: absolute;
+  width: 150px;
+  height: 22px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  border: 2px solid #000;
+  background-color: #3a2a12;
+  background-image: var(--fill-dark);
+  background-size: 16px 16px;
+  cursor: help;
+}
+.terrain-strip.t-terrain-pit {
+  background-color: #241a10;
+}
+.terrain-strip.t-terrain-bonfire {
+  background-color: #8a2a00;
+  background-image: var(--fill-blood);
+}
+.terrain-strip.t-terrain-high-ground {
+  background-color: #3a5a2a;
+}
+.terrain-strip.t-terrain-mud {
+  background-color: #4a3018;
+}
+.terrain-strip.t-terrain-spikes {
+  background-color: #4a4e58;
+}
+.terrain-strip.t-terrain-cinders {
+  background-color: #6b140e;
+  background-image: var(--fill-blood);
+}
+.terrain-strip.t-terrain-web {
+  background-color: #646872;
+}
+.terrain-strip.t-terrain-shrine {
+  background-color: #2f52c0;
+}
+.terrain-strip.t-terrain-server-rack {
+  background-color: #16708c;
+}
+.slot.has-terrain {
+  border-style: solid;
+  border-color: rgba(212, 186, 0, 0.35);
+}
+.choice-view {
+  z-index: 85;
+}
+.chip-later,
+.chip-combo {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 0 5px;
+  border: 2px solid #000;
+  cursor: help;
+}
+.chip-later {
+  background: #2a1f45;
+  color: var(--accent-2);
+}
+.chip-combo {
+  background: #3a3006;
+  color: var(--accent);
+}

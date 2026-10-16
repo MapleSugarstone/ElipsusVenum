@@ -44,6 +44,10 @@ export function candidates(b: Battle, seat: Seat): BattleAction[] {
   const push = (a: BattleAction) => {
     if (!legal(b, seat, a)) out.push(a);
   };
+  if (b.choice && b.choice.seat === seat) {
+    b.choice.options.forEach((_, i) => push({ t: 'choose', i }));
+    return out;
+  }
   if (!s.alive) {
     push({ t: 'ghost', kind: 'bone' });
     for (const lane of lanesOf(seat === 0 ? 1 : 0)) if (b.e[lane]) push({ t: 'ghost', kind: 'mark', tg: { row: 'e', lane } });
@@ -119,6 +123,7 @@ function rollout(b: Battle): number {
   for (const seat of SEATS) {
     const s = sim.seats[seat];
     if (sim.over || !s.alive || s.rung) continue;
+    if (sim.choice && sim.choice.seat === seat) applyInPlace(sim, seat, { t: 'choose', i: 0 });
     if (needsDraw(sim, seat)) applyInPlace(sim, seat, { t: 'draw', from: s.deck.length + s.discard.length > 0 ? 'main' : 'side' });
     if (!legal(sim, seat, { t: 'ring' })) applyInPlace(sim, seat, { t: 'ring' });
   }
@@ -161,10 +166,11 @@ export function chooseAction(b: Battle, seat: Seat, opts: BotOptions = {}): Batt
   }
   const list = candidates(b, seat);
   const limit = opts.limit ?? 600;
-  if (needsDraw(b, seat)) return { t: 'draw', from: drawFrom(b, seat) };
-  const base = rollout(b);
-  let best: BattleAction = { t: 'ring' };
-  let bestScore = base + 1;
+  const choosing = !!b.choice && b.choice.seat === seat;
+  if (!choosing && needsDraw(b, seat)) return { t: 'draw', from: drawFrom(b, seat) };
+  const base = choosing ? -Infinity : rollout(b);
+  let best: BattleAction = choosing ? list[0] : { t: 'ring' };
+  let bestScore = choosing ? -Infinity : base + 1;
   for (const a of list.slice(0, limit)) {
     const sim = structuredClone(b);
     applyInPlace(sim, seat, a);

@@ -11,17 +11,26 @@ export function setStageScale(s: number): void {
   stageScale = s;
 }
 
+function termKey(text: string): string | null {
+  const word = text.replace(/ \d+$/, '');
+  if (GLOSSARY.has(word)) return word;
+  const single = word.replace(/s$/, '');
+  return GLOSSARY.has(single) ? single : null;
+}
+
+/** Every glossary term on the card, then the terms those entries use in turn, one level deep. */
 function termsIn(id: string, opts: FullCardOpts): string[] {
   const lines = opts.ab ? cardLines(opts.ab) : defLines(cardDef(id), !!opts.up);
   const out: string[] = [];
-  for (const line of lines) {
-    for (const span of line.spans) {
+  const add = (spans: { t: string; b?: boolean }[]) => {
+    for (const span of spans) {
       if (!span.b) continue;
-      const word = span.t.replace(/ \d+$/, '');
-      const key = GLOSSARY.has(word) ? word : GLOSSARY.has(word.replace(/s$/, '')) ? word.replace(/s$/, '') : null;
-      if (key && !out.includes(key)) out.push(key);
+      const key = termKey(span.t);
+      if (key && key !== cardDef(id).name && !out.includes(key)) out.push(key);
     }
-  }
+  };
+  for (const line of lines) add(line.spans);
+  for (const term of [...out]) add(markTerms(GLOSSARY.get(term)!));
   return out;
 }
 

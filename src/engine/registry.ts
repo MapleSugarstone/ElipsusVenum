@@ -1,5 +1,5 @@
 import type { Ctx } from './fx.ts';
-import type { AbilityInst, Battle, CardInst, Cost, Num, Placement, Row, Seat } from './types.ts';
+import type { AbilityInst, Battle, CardInst, ChoiceOption, Cost, Num, Placement, Row, Seat } from './types.ts';
 
 /** Every trigger a rules line can react to. Each runs with `c.self` set to the card that owns the line. */
 export interface Hooks {
@@ -26,6 +26,14 @@ export interface Hooks {
   battleStart?(c: Ctx): void;
   tick?(c: Ctx): void;
   evoke?(c: Ctx): void;
+  /** Resolves a pending choice with the option picked. */
+  chosen?(c: Ctx, pick: ChoiceOption): void;
+  /** Runs when a delayed effect comes due. */
+  later?(c: Ctx): void;
+  /** Terrain: a creature enters this lane's player or enemy row. `c.lane()` is the lane. */
+  terrainEnter?(c: Ctx, card: CardInst): void;
+  /** Terrain: the end of the players' turn. */
+  terrainEnd?(c: Ctx): void;
 }
 
 export interface AbilityDef extends Hooks {
@@ -103,7 +111,7 @@ export const CARDS = new Map<string, CardDef>();
 
 const HOOK_NAMES: (keyof Hooks)[] = [
   'play', 'enter', 'death', 'sacrificed', 'struck', 'kill', 'turnStart', 'turnEnd', 'allyDies', 'foePlaced',
-  'powerMod', 'seatPlay', 'partnerPlay', 'seatSac', 'battleStart', 'tick', 'evoke',
+  'powerMod', 'seatPlay', 'partnerPlay', 'seatSac', 'battleStart', 'tick', 'evoke', 'chosen', 'later', 'terrainEnter', 'terrainEnd',
 ];
 
 export function defAbility(def: AbilityDef): AbilityDef {

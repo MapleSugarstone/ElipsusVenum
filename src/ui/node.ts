@@ -1,7 +1,8 @@
 import { CHARACTERS } from '../content/index.ts';
 import type { DeckCard } from '../engine/battle.ts';
-import { ability, card as cardDef, ITEMS, RELICS } from '../engine/registry.ts';
-import { fillTemplate } from '../engine/text.ts';
+import { ability, card as cardDef, ITEMS, kwInst, RELICS } from '../engine/registry.ts';
+import { cardLines, fillTemplate, type TextLine } from '../engine/text.ts';
+import type { AbilityInst } from '../engine/types.ts';
 import { other, type Seat } from '../engine/types.ts';
 import { EVENTS } from '../run/events.ts';
 import { deckLines } from '../run/game.ts';
@@ -18,16 +19,40 @@ const TITLES: Record<string, string> = {
   cards: 'Card choice', mycologist: 'Mycologists', stones: 'Sacrificial stones', woodcarver: 'Woodcarver',
 };
 
-export function deckCardEl(dc: DeckCard, scale: number): HTMLDivElement {
+/** A deck card's rules lines, with its upgrade's numbers and keywords when `up` is set. Lines moved onto it stay. */
+function upAb(dc: DeckCard, up: boolean): AbilityInst[] {
   const def = cardDef(dc.id);
-  const ab = deckLines(dc).map((a) => {
-    if (!dc.up || !a.p || !def.up?.p) return a;
+  const base = def.ab.map((a) => {
+    if (!up || !a.p || !def.up?.p) return a;
     const p = { ...a.p };
     for (const k of Object.keys(def.up.p)) if (k in p) p[k] = def.up.p[k];
     return { ...a, p };
   });
-  const el = fullCard(dc.id, { up: dc.up, ab, dp: dc.dp, dh: dc.dh, scale });
-  return el;
+  if (up && def.up?.kw) for (const k of def.up.kw) base.push(kwInst(k));
+  return [...base, ...deckLines(dc).slice(def.ab.length)];
+}
+
+export function deckCardEl(dc: DeckCard, scale: number): HTMLDivElement {
+  return fullCard(dc.id, { up: dc.up, ab: upAb(dc, !!dc.up), dp: dc.dp, dh: dc.dh, scale });
+}
+
+const lineText = (l: TextLine) => l.spans.map((s) => s.t).join('');
+
+/** The card as it is and as it would be upgraded, side by side, with every change on the upgraded one highlighted. */
+function upgradePreview(dc: DeckCard): HTMLDivElement {
+  const def = cardDef(dc.id);
+  const before = cardLines(upAb(dc, false)).map(lineText);
+  const after = cardLines(upAb(dc, true));
+  const mark = after.map((l, i) => (before.includes(lineText(l)) ? -1 : i)).filter((i) => i >= 0);
+  const up = def.up ?? {};
+  const scale = 0.5;
+  const cell = (label: string, el: HTMLElement) =>
+    h('div', { class: 'up-cell' }, h('div', { class: 'up-label' }, label), h('div', { class: 'offer', style: { width: `${280 * scale}px`, height: `${392 * scale}px` } }, el));
+  return h('div', { class: 'up-preview' },
+    cell('Now', fullCard(dc.id, { ab: upAb(dc, false), dp: dc.dp, dh: dc.dh, scale })),
+    h('div', { class: 'spr spr-arrow' }),
+    cell('Upgraded', fullCard(dc.id, { up: true, ab: upAb(dc, true), dp: dc.dp, dh: dc.dh, scale, mark, markCost: !!up.cost, markStats: up.power !== undefined || up.health !== undefined })),
+  );
 }
 
 export class NodeScreen {
@@ -155,6 +180,8 @@ export class NodeScreen {
         const chosen = rs.deck.find((c) => c.d === sel);
         if (chosen) {
           const isCreature = cardDef(chosen.id).kind === 'creature';
+          if (!chosen.up && cardDef(chosen.id).up) body.append(upgradePreview(chosen));
+          else body.append(h('p', { class: 'up-none' }, chosen.up ? `${cardDef(chosen.id).name} is already upgraded.` : `${cardDef(chosen.id).name} has no upgrade.`));
           body.append(
             h('div', { style: { display: 'flex', gap: '8px', marginBottom: '10px' } },
               h('button', { disabled: !mine || chosen.up || !cardDef(chosen.id).up, onclick: () => this.send(seat, { t: 'rest', opt: 'upgrade', d: chosen.d }) }, `Upgrade ${cardDef(chosen.id).name}`),

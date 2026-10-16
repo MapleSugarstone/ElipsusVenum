@@ -24,9 +24,9 @@ export function costHtml(cost: Cost): string {
   return parts.join('');
 }
 
-function linesHtml(lines: TextLine[]): string {
+function linesHtml(lines: TextLine[], mark: number[] = []): string {
   return lines
-    .map((l) => `<p class="${l.off ? 'off' : ''}">${l.spans.map((s) => (s.b ? `<b>${esc(s.t)}</b>` : esc(s.t))).join('')}</p>`)
+    .map((l, i) => `<p class="${l.off ? 'off' : ''} ${mark.includes(i) ? 'changed' : ''}">${l.spans.map((s) => (s.b ? `<b>${esc(s.t)}</b>` : esc(s.t))).join('')}</p>`)
     .join('');
 }
 
@@ -60,6 +60,10 @@ export interface FullCardOpts {
   cls?: string;
   dp?: number;
   dh?: number;
+  /** Rules lines to highlight, by index, for showing what an upgrade changes. */
+  mark?: number[];
+  markCost?: boolean;
+  markStats?: boolean;
 }
 
 /**
@@ -93,11 +97,11 @@ export function fullCard(id: string, opts: FullCardOpts = {}): HTMLDivElement {
   });
   el.innerHTML = `
     <div class="c-name ${def.name.length > 15 ? 'long' : ''}">${esc(def.name)}</div>
-    <div class="c-cost">${costHtml(cost)}</div>
+    <div class="c-cost ${opts.markCost ? 'changed' : ''}">${costHtml(cost)}</div>
     ${artHtml('c-art', id, 252, 150, k)}
     <div class="c-type">${esc(typeLine(def))}</div>
-    <div class="c-text" style="font-size:${textSize(chars, def.kind === 'spell')}px">${linesHtml(lines)}</div>
-    ${def.kind === 'creature' ? `<div class="c-stats"><span class="${power > basePower ? 'buffed' : power < basePower ? 'hurt' : ''}">${power}</span><span class="${health < maxHealth ? 'hurt' : health > baseHealth ? 'buffed' : ''}">${health}</span></div>` : ''}`;
+    <div class="c-text" style="font-size:${textSize(chars, def.kind === 'spell')}px">${linesHtml(lines, opts.mark)}</div>
+    ${def.kind === 'creature' ? `<div class="c-stats ${opts.markStats ? 'changed' : ''}"><span class="${power > basePower ? 'buffed' : power < basePower ? 'hurt' : ''}">${power}</span><span class="${health < maxHealth ? 'hurt' : health > baseHealth ? 'buffed' : ''}">${health}</span></div>` : ''}`;
   el.style.setProperty('--k', String(k));
   el.dataset.id = id;
   return el;
@@ -110,6 +114,7 @@ function miniText(ab: AbilityInst[]): string {
 }
 
 const STATUS_LABEL: Record<string, string> = {
+  bond: 'Bond',
   vulnerable: 'Vuln', weak: 'Weak', poison: 'Psn', stun: 'Stun', shield: 'Shield', artifact: 'Art', intangible: 'Intg', glitch: 'Glitch',
 };
 const DEBUFF = new Set(['vulnerable', 'weak', 'poison', 'stun', 'glitch']);

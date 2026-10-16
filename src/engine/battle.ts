@@ -1,7 +1,7 @@
 import {
   Ctx, at, checkOver, damage, die, drawCard, emit, fireBoard, fireCard, fireSeat, hasKw, kwValue, laneActive,
   makeInst, placeAll, placeEnemy, placeNow, placePlayer, powerOf, remove, scaleLoss, scaleWin, moveCard, gainBones,
-  paramsOf, type Env,
+  paramsOf, fireTerrain, type Env,
 } from './fx.ts';
 import { ability, BOSSES, card as cardDef, HALVES, ITEMS, kwId, type TargetSpec } from './registry.ts';
 import { seedRng, shuffle } from './rng.ts';
@@ -97,6 +97,7 @@ function seatState(b: Battle, seat: Seat, s: SeatSetup, size: number): SeatState
     relics: [...s.relics],
     items: [...s.items],
     perm: [],
+    later: [],
   };
   st.deck = shuffle(b.rng, s.deck.map((dc) => deckInst(b, seat, dc, s.totem)));
   for (let i = 0; i < s.sideCount; i++) st.side.push(makeInst(b, s.side, seat, 'p'));
@@ -123,6 +124,8 @@ export function createBattle(setup: BattleSetup): Result {
     boss: setup.boss ? { id: setup.boss, phase: 1, c: {} } : null,
     marks: [],
     rules: [...(setup.rules ?? [])],
+    terrain: Array(LANES).fill(null),
+    choice: null,
   };
   b.seats = [seatState(b, 0, setup.seats[0], size), seatState(b, 1, setup.seats[1], size)];
   const env: Env = { b, ev: [] };
@@ -174,6 +177,10 @@ export function costOf(b: Battle, seat: Seat, c: CardInst): Required<Cost> {
     if ((s.c.blessed ?? 0) > 0) energy = 0;
     else energy = Math.max(0, energy - (s.c.kingLess ?? 0));
   }
+  if (c.c.free === b.turn) {
+    energy = 0;
+    bones = 0;
+  }
   return { blood, energy, bones };
 }
 
@@ -207,6 +214,12 @@ export function legal(b: Battle, seat: Seat, a: BattleAction): string | null {
     return null;
   }
   if (!s.alive) return 'you are dead';
+  const choice = b.choice;
+  if (choice && choice.seat === seat) {
+    if (a.t !== 'choose') return 'make your choice first';
+    return Number.isInteger(a.i) && a.i >= 0 && a.i < choice.options.length ? null : 'no such option';
+  }
+  if (a.t === 'choose') return 'nothing to choose';
   if (s.rung && a.t !== 'unring') return 'you rang your bell';
   switch (a.t) {
     case 'draw': {
@@ -332,6 +345,16 @@ function act(env: Env, seat: Seat, a: BattleAction): void {
     case 'play':
       playCard(env, seat, a);
       return;
+    case 'choose': {
+      const ch = b.choice!;
+      b.choice = null;
+      const pick = ch.options[a.i];
+      emit(env, { k: 'chose', seat, id: pick.id });
+      const fn = ability(ch.a).chosen;
+      if (fn) fn(new Ctx(env, seat, null, ch.p, ch.tg), pick);
+      checkOver(env);
+      return;
+    }
   }
 }
 
@@ -359,6 +382,10 @@ function playCard(env: Env, seat: Seat, a: Extract<BattleAction, { t: 'play' }>)
     die(env, v, null);
   }
   emit(env, { k: 'play', seat, uid: c.uid, id: c.id, lane: a.lane ?? null });
+  // Counted before the card resolves, so a card that counts plays counts itself.
+  s.c.cardsTurn = (s.c.cardsTurn ?? 0) + 1;
+  if (def.kind === 'spell') s.c.spellsTurn = (s.c.spellsTurn ?? 0) + 1;
+  else s.c.creaturesTurn = (s.c.creaturesTurn ?? 0) + 1;
   const tg = a.tg ?? [];
   const twice = def.kind === 'spell' && (s.c.twice ?? 0) > 0;
   if (twice) s.c.twice -= 1;
@@ -488,6 +515,8 @@ function resolveRound(env: Env): void {
 function playerTurnEnd(env: Env): void {
   const b = env.b;
   fireBoard(env, 'turnEnd', (c) => c.side === 'p');
+  for (let lane = 0; lane < LANES && !b.over; lane++) if (laneActive(b, lane)) fireTerrain(env, lane, 'terrainEnd');
+  if (b.over) return;
   for (const seat of SEATS) {
     const s = b.seats[seat];
     if (!s.alive) continue;
@@ -566,6 +595,9 @@ function startTurn(env: Env): void {
     if (!(s.c.keepBlock ?? 0)) s.block = 0;
     s.rung = false;
     s.drew = false;
+    s.c.cardsTurn = 0;
+    s.c.spellsTurn = 0;
+    s.c.creaturesTurn = 0;
     if (s.deck.length + s.discard.length + s.side.length === 0) {
       s.drew = true;
       s.c.starve = (s.c.starve ?? 0) + 1;
@@ -580,7 +612,22 @@ function startTurn(env: Env): void {
   fireBoard(env, 'turnStart', (c) => c.side === 'p');
   for (const seat of SEATS) if (b.seats[seat].alive) fireSeat(env, seat, 'turnStart');
   for (const rule of b.rules) runRule(env, rule, 'turnStart');
+  for (const seat of SEATS) runLater(env, seat);
   checkOver(env);
+}
+
+/** Counts every delayed effect down and runs the ones that come due, in the order they were made. */
+function runLater(env: Env, seat: Seat): void {
+  const s = env.b.seats[seat];
+  if (!s.alive || !s.later?.length) return;
+  const due = s.later.filter((l) => l.turns <= 1);
+  s.later = s.later.filter((l) => l.turns > 1).map((l) => ({ ...l, turns: l.turns - 1 }));
+  for (const l of due) {
+    if (env.b.over) return;
+    emit(env, { k: 'laterDue', seat, a: l.a });
+    const fn = ability(l.a).later;
+    if (fn) fn(new Ctx(env, seat, null, l.p, l.tg));
+  }
 }
 
 // ---------------------------------------------------------------- results

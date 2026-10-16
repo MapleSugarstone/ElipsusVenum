@@ -7,7 +7,7 @@ import type { Game, RunSeat } from './types.ts';
 export class RunCtx {
   readonly g: Game;
   readonly ev: Ev[];
-  pendingBattle: { halves: [string, string]; tier: 'normal' | 'elite' } | null = null;
+  pendingBattle: { halves: [string, string]; tier: 'normal' | 'elite'; boss?: string } | null = null;
   constructor(g: Game, ev: Ev[]) {
     this.g = g;
     this.ev = ev;
@@ -46,6 +46,32 @@ export class RunCtx {
     if (idx < 0) return;
     const [gone] = s.deck.splice(idx, 1);
     this.ev.push({ k: 'deckRemove', seat: i, id: gone.id });
+  }
+  /** Replaces a random card in the deck with a random card of the same rarity. Curses are left alone. */
+  transformRandom(i: Seat): string | null {
+    const s = this.seat(i);
+    const options = s.deck.filter((c) => cardDef(c.id).pool !== 'curse');
+    if (options.length === 0) return null;
+    const pick = options[this.rand(options.length)];
+    const was = cardDef(pick.id);
+    const rarity: Rarity = was.rarity === 'special' ? 'common' : was.rarity;
+    const into = this.randomCard(i, rarity);
+    if (!into) return null;
+    this.ev.push({ k: 'deckRemove', seat: i, id: pick.id });
+    const idx = s.deck.indexOf(pick);
+    s.deck[idx] = { d: pick.d, id: into };
+    this.ev.push({ k: 'deckAdd', seat: i, id: into, up: false });
+    return into;
+  }
+  /** Removes a random card from the deck, a curse first if there is one. */
+  removeRandom(i: Seat): string | null {
+    const s = this.seat(i);
+    if (s.deck.length <= 1) return null;
+    const curses = s.deck.filter((c) => cardDef(c.id).pool === 'curse');
+    const pool = curses.length ? curses : s.deck;
+    const pick = pool[this.rand(pool.length)];
+    this.removeCard(i, pick.d);
+    return pick.id;
   }
   upgradeRandom(i: Seat, kind?: 'creature' | 'spell'): string | null {
     const s = this.seat(i);
@@ -107,6 +133,10 @@ export class RunCtx {
   }
   fight(halves: [string, string], tier: 'normal' | 'elite' = 'normal'): void {
     this.pendingBattle = { halves, tier };
+  }
+  /** Starts a boss fight that pays out like an elite fight. */
+  fightBoss(boss: string): void {
+    this.pendingBattle = { halves: ['', ''], tier: 'elite', boss };
   }
 }
 

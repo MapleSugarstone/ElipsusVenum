@@ -2,7 +2,7 @@ import { ability, BOSSES, card as cardDef, HALVES, kwId, RELICS, type Hooks } fr
 import { randInt, shuffle } from './rng.ts';
 import {
   HAND_LIMIT, HALF, LANES, MAX_ENERGY, lanesOf, other, ownerOf,
-  type AbilityInst, type Battle, type CardInst, type Ev, type Num, type Placement, type Row, type Seat, type SlotRef,
+  type AbilityInst, type Battle, type CardInst, type ChoiceOption, type Ev, type Num, type Placement, type Row, type Seat, type SlotRef,
 } from './types.ts';
 
 /** The battle being changed plus the event list the change produces. */
@@ -108,7 +108,45 @@ export function powerOf(b: Battle, c: CardInst): number {
       if (fn) p += fn(new Ctx(env, c.seat, null, paramsOf(inst), []), c);
     }
   }
+  const lane = slotOf(b, c.uid)?.lane;
+  const t = lane === undefined ? null : b.terrain?.[lane];
+  if (t && lane !== undefined) {
+    const fn = ability(t.a).powerMod;
+    if (fn) p += fn(new Ctx(env, t.seat, null, { ...(ability(t.a).p ?? {}), ...t.p }, [{ row: 'p', lane }]), c);
+  }
   return Math.max(0, p);
+}
+
+/** Fires a lane's terrain hook, if the lane has terrain. */
+export function fireTerrain(env: Env, lane: number, hook: 'terrainEnter' | 'terrainEnd', ...args: unknown[]): void {
+  const t = env.b.terrain?.[lane];
+  if (!t) return;
+  const fn = ability(t.a)[hook] as ((ctx: Ctx, ...rest: unknown[]) => void) | undefined;
+  if (fn) fn(new Ctx(env, t.seat, null, { ...(ability(t.a).p ?? {}), ...t.p }, [{ row: 'p', lane }]), ...args);
+}
+
+/** The bonded creature still on the board, if any. */
+export function bondOf(b: Battle, c: CardInst): CardInst | null {
+  const uid = c.c.bond;
+  if (!uid) return null;
+  return b.p.find((x) => x?.uid === uid) ?? b.e.find((x) => x?.uid === uid) ?? null;
+}
+
+/** Applies a card's upgrade to an instance for the rest of the battle. */
+export function upgradeInst(c: CardInst): boolean {
+  const def = cardDef(c.id);
+  if (c.up || !def.up) return false;
+  const up = def.up;
+  c.up = true;
+  if (up.p) for (const a of c.ab) if (a.p) for (const k of Object.keys(up.p)) if (k in a.p) a.p[k] = up.p[k];
+  if (up.kw) for (const k of up.kw) c.ab.push(typeof k === 'string' ? { a: kwId(k) } : { a: kwId(k[0]), p: { n: k[1] } });
+  if (up.cost) c.cost = { ...up.cost };
+  if (up.power !== undefined) c.power += up.power - def.power;
+  if (up.health !== undefined) {
+    c.health += up.health - def.health;
+    c.maxHealth += up.health - def.health;
+  }
+  return true;
 }
 
 // ---------------------------------------------------------------- instances
@@ -163,6 +201,7 @@ export function placePlayer(env: Env, c: CardInst, lane: number, how: 'play' | '
   b.p[lane] = c;
   emit(env, { k: 'enter', uid: c.uid, row: 'p', lane, how });
   fireCard(env, c, 'enter');
+  if (b.p[lane] === c) fireTerrain(env, lane, 'terrainEnter', c);
 }
 
 export function placeEnemy(env: Env, c: CardInst, row: 'e' | 'q', lane: number): void {
@@ -174,13 +213,27 @@ export function placeEnemy(env: Env, c: CardInst, row: 'e' | 'q', lane: number):
   if (row === 'e') {
     fireCard(env, c, 'enter');
     fireBoard(env, 'foePlaced', (x) => x.side === 'p', c, lane);
+    if (b.e[lane] === c) fireTerrain(env, lane, 'terrainEnter', c);
   }
 }
 
-/** `attack` marks damage from a creature's attack, which is the only damage Thorns answers. */
-export function damage(env: Env, target: CardInst, n: number, src: CardInst | null, attack = false): number {
+/**
+ * `attack` marks damage from a creature's attack, which is the only damage Thorns answers. A bonded creature passes half
+ * the damage, rounded down, to its bond. `share` is off for that passed half, so it never bounces back.
+ */
+export function damage(env: Env, target: CardInst, n: number, src: CardInst | null, attack = false, share = true): number {
   const b = env.b;
   if (n <= 0 || !onBoard(b, target)) return 0;
+  const mate = share ? bondOf(b, target) : null;
+  if (mate) {
+    const half = Math.floor(n / 2);
+    n -= half;
+    if (half > 0) {
+      emit(env, { k: 'bondShare', from: target.uid, to: mate.uid, n: half });
+      damage(env, mate, half, src, attack, false);
+      if (!onBoard(b, target)) return 0;
+    }
+  }
   if ((target.st.vulnerable ?? 0) > 0) n += 2;
   if (b.marks.includes(target.uid)) n += 2;
   if ((target.st.shield ?? 0) > 0) {
@@ -211,6 +264,9 @@ export function die(env: Env, c: CardInst, killer: CardInst | null): void {
   const ref = remove(b, c);
   if (!ref) return;
   c.c.lane = ref.lane;
+  const mate = bondOf(b, c);
+  if (mate) delete mate.c.bond;
+  delete c.c.bond;
   emit(env, { k: 'die', uid: c.uid, row: ref.row, lane: ref.lane });
   fireCard(env, c, 'death');
   if (c.side === 'p' && b.seats[c.seat].alive) {
@@ -793,6 +849,91 @@ export class Ctx {
   }
   emit(ev: Ev): void {
     emit(this.env, ev);
+  }
+  /** Places terrain on a lane, replacing any there. */
+  terrain(lane: number, a: string, p: Num = {}): void {
+    if (lane < 0 || lane >= LANES) return;
+    if (!this.b.terrain) this.b.terrain = Array(LANES).fill(null);
+    this.b.terrain[lane] = { a, p: { ...p }, seat: this.seat };
+    emit(this.env, { k: 'terrain', lane, a });
+  }
+  clearTerrain(lane: number): void {
+    if (!this.b.terrain?.[lane]) return;
+    this.b.terrain[lane] = null;
+    emit(this.env, { k: 'terrain', lane, a: null });
+  }
+  terrainAt(lane: number): string | null {
+    return this.b.terrain?.[lane]?.a ?? null;
+  }
+  /** Pauses for the seat to pick one option. The `chosen` hook of ability `a` resolves it. Nothing happens with no options. */
+  choose(options: ChoiceOption[], a: string, prompt: string, p: Num = this.p): void {
+    if (options.length === 0) return;
+    this.b.choice = { seat: this.seat, options, a, p: { ...p }, tg: [...this.tg], prompt };
+    emit(this.env, { k: 'choice', seat: this.seat });
+  }
+  /** Runs ability `a`'s `later` hook at the start of a coming turn: the next one when `turns` is 1. */
+  later(a: string, turns = 1, p: Num = this.p): void {
+    this.me.later = this.me.later ?? [];
+    this.me.later.push({ a, p: { ...p }, tg: [...this.tg], turns });
+    emit(this.env, { k: 'later', seat: this.seat, a });
+  }
+  /** Bonds two creatures: damage to either is split between them until one dies. */
+  bond(x: CardInst | null, y: CardInst | null): boolean {
+    if (!x || !y || x === y || !onBoard(this.b, x) || !onBoard(this.b, y)) return false;
+    for (const c of [x, y]) {
+      const old = bondOf(this.b, c);
+      if (old) delete old.c.bond;
+    }
+    x.c.bond = y.uid;
+    y.c.bond = x.uid;
+    emit(this.env, { k: 'bond', a: x.uid, b: y.uid });
+    return true;
+  }
+  bondOf(c: CardInst): CardInst | null {
+    return bondOf(this.b, c);
+  }
+  /** Upgrades a card instance for the rest of the battle. */
+  upgrade(c: CardInst | null): boolean {
+    if (!c || !upgradeInst(c)) return false;
+    emit(this.env, { k: 'upgrade', uid: c.uid });
+    return true;
+  }
+  /** Cards this seat played this turn, counting the one resolving now. `kind` narrows it to spells or creatures. */
+  played(kind?: 'spell' | 'creature', seat: Seat = this.seat): number {
+    const c = this.b.seats[seat].c;
+    return kind === 'spell' ? c.spellsTurn ?? 0 : kind === 'creature' ? c.creaturesTurn ?? 0 : c.cardsTurn ?? 0;
+  }
+  /** Cards the partner played this turn. */
+  partnerPlayed(): number {
+    return this.b.seats[this.partner].c.cardsTurn ?? 0;
+  }
+  /** Lets a card in hand be played for no energy or bones this turn. */
+  freeThisTurn(c: CardInst): void {
+    c.c.free = this.b.turn;
+  }
+  /** The top `n` cards of a seat's deck, the next one to be drawn first. */
+  topOfDeck(n: number, seat: Seat = this.seat): CardInst[] {
+    const deck = this.b.seats[seat].deck;
+    return deck.slice(Math.max(0, deck.length - n)).reverse();
+  }
+  /** Moves a card from this seat's deck into its hand. */
+  fromDeck(uid: number): CardInst | null {
+    const deck = this.me.deck;
+    const i = deck.findIndex((x) => x.uid === uid);
+    if (i < 0) return null;
+    const [c] = deck.splice(i, 1);
+    addToHand(this.env, this.seat, c);
+    return c;
+  }
+  /** Moves a card from this seat's hand into another seat's hand. */
+  give(uid: number, seat: Seat): CardInst | null {
+    const hand = this.me.hand;
+    const i = hand.findIndex((x) => x.uid === uid);
+    if (i < 0) return null;
+    const [c] = hand.splice(i, 1);
+    emit(this.env, { k: 'give', from: this.seat, to: seat, uid });
+    addToHand(this.env, seat, c);
+    return c;
   }
   halfOf(lane: number): Seat {
     return ownerOf(lane);

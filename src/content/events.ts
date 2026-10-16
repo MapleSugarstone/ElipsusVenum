@@ -89,11 +89,10 @@ defEvent({
   options: [
     {
       label: 'Open it',
-      text: 'Each of you gains a relic, then you fight what was inside.',
+      text: 'You fight the Mimic Hoard, a boss. It pays like an elite fight.',
       run(r) {
-        r.each((_, i) => r.relic(i, 'common'));
-        r.fight(['dragonling', 'grubs'], 'normal');
-        return 'It had both.';
+        r.fightBoss('mimic-hoard');
+        return 'It was not a chest. None of them were chests.';
       },
     },
     {

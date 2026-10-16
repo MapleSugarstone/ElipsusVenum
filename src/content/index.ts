@@ -4,6 +4,8 @@ import './shared2.ts';
 import './blue.ts';
 import './pistachio.ts';
 import './chars2.ts';
+import './mechanics.ts';
+import './foes2.ts';
 import './enemies.ts';
 import './bosses.ts';
 import './act2.ts';
@@ -13,6 +15,9 @@ import './relics.ts';
 import './relics2.ts';
 import './events.ts';
 import './events2.ts';
+import './events3.ts';
+// Last, so it can read every card and ability above.
+import './glossary.ts';
 
 export interface CharacterDef {
   id: string;

@@ -203,7 +203,7 @@ function endBattle(g: Game, ev: Ev[]): void {
     rs.candles = bs.candles;
     rs.alive = bs.alive;
     rs.items = [...bs.items];
-    rs.teeth += bs.teeth;
+    rs.teeth = Math.max(0, rs.teeth + bs.teeth);
     for (const p of bs.perm) {
       for (const owner of run.seats) {
         const dc = owner.deck.find((x) => x.d === p.d);
@@ -374,7 +374,7 @@ function resolveEvent(g: Game, ev: Ev[]): void {
   e.stage = 1;
   ev.push({ k: 'eventResult', i: choice, text: e.result });
   if (run.over) return;
-  if (ctx.pendingBattle) startBattle(g, ev, ctx.pendingBattle.tier, ctx.pendingBattle.halves);
+  if (ctx.pendingBattle) startBattle(g, ev, ctx.pendingBattle.tier, ctx.pendingBattle.halves, ctx.pendingBattle.boss);
 }
 
 // ---------------------------------------------------------------- legality

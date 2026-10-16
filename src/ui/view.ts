@@ -1,4 +1,6 @@
 import { powerOf } from '../engine/fx.ts';
+import { ability } from '../engine/registry.ts';
+import { fillTemplate } from '../engine/text.ts';
 import type { AbilityInst, Battle, CardInst, Cost, Num } from '../engine/types.ts';
 
 export interface CardView {
@@ -37,7 +39,22 @@ export interface SeatView {
   st: Num;
 }
 
+/** A lane's terrain as the board shows it: its name and its rules with numbers filled in. */
+export interface TerrainView {
+  name: string;
+  text: string;
+  a: string;
+}
+
+export function terrainView(a: string, p: Num): TerrainView {
+  const def = ability(a);
+  const full = fillTemplate(def.text, { ...(def.p ?? {}), ...p });
+  const dot = full.indexOf('.');
+  return { a, name: full.slice(0, dot), text: full.slice(dot + 1).trim() };
+}
+
 export interface BoardView {
+  terrain: (TerrainView | null)[];
   turn: number;
   p: (CardView | null)[];
   e: (CardView | null)[];
@@ -56,7 +73,7 @@ export function cardView(b: Battle, c: CardInst): CardView {
     basePower: c.power,
     health: c.health,
     maxHealth: c.maxHealth,
-    st: { ...c.st },
+    st: { ...c.st, ...(c.c.bond ? { bond: 1 } : {}) },
     ab: c.ab.map((a) => ({ ...a, p: a.p ? { ...a.p } : undefined })),
     cost: { ...c.cost },
   };
@@ -65,6 +82,7 @@ export function cardView(b: Battle, c: CardInst): CardView {
 export function boardView(b: Battle): BoardView {
   const row = (cards: (CardInst | null)[]) => cards.map((c) => (c ? cardView(b, c) : null));
   return {
+    terrain: (b.terrain ?? []).map((t) => (t ? terrainView(t.a, t.p) : null)),
     turn: b.turn,
     p: row(b.p),
     e: row(b.e),
