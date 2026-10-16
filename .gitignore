@@ -1,0 +1,8 @@
+Notes
+node_modules
+dist
+CLAUDE.md
+runs
+runs-wrangler.log
+server/node_modules
+server/.wrangler

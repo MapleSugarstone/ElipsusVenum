@@ -1,0 +1,17 @@
+{
+  "name": "elipsusvenum-relay",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "The relay rooms for co-op play: a Worker with one lobby and one Durable Object per run.",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20260822.1",
+    "typescript": "5.9.3",
+    "wrangler": "4.125.0"
+  }
+}

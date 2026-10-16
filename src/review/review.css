@@ -1,0 +1,80 @@
+html,
+body {
+  overflow: auto;
+  user-select: text;
+}
+.rv {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 20px;
+  padding: 16px 20px;
+}
+.rv h1 {
+  font-family: var(--font-display);
+  font-weight: normal;
+  margin: 0 0 10px;
+}
+.rv-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.rv-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.rv-cell {
+  position: relative;
+  width: 196px;
+  height: 274px;
+  cursor: pointer;
+}
+.rv-cell .card {
+  transform: scale(0.7);
+}
+.rv-cell.has-note::after {
+  content: 'request';
+  position: absolute;
+  right: 4px;
+  top: -8px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 11px;
+  padding: 0 6px;
+  border-radius: var(--radius);
+}
+.rv-cell.on {
+  outline: 3px solid var(--accent);
+}
+.rv-side {
+  position: sticky;
+  top: 12px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rv-side textarea {
+  width: 100%;
+  height: 120px;
+  font: inherit;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px;
+}
+.rv-side pre {
+  white-space: pre-wrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px;
+  max-height: 260px;
+  overflow: auto;
+}

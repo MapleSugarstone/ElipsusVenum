@@ -1,0 +1,381 @@
+/* The void look, layered over style.css. Surfaces are veils over the void, cards are grimy clay paper, and edges boil. */
+
+#void {
+  position: fixed;
+  image-rendering: pixelated;
+  z-index: 0;
+}
+#stage-wrap {
+  z-index: 1;
+}
+#grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 95;
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  background-image: var(--grain);
+  background-size: var(--grain-size, 640px) var(--grain-size, 640px);
+  image-rendering: pixelated;
+}
+.boil {
+  filter: url(#boil);
+}
+#wipe {
+  position: fixed;
+  image-rendering: pixelated;
+  pointer-events: none;
+  z-index: 90;
+}
+
+/* ---------------------------------------------------------------- surfaces */
+
+.topbar {
+  background: var(--veil);
+  border-bottom: 1px solid #2c2440;
+}
+.topbar .dealer {
+  color: var(--accent-2);
+  font-family: var(--font-mono);
+  font-size: 15px;
+}
+.node-screen {
+  background: transparent;
+}
+.node-col,
+.event-box,
+.setup-screen > .char-row {
+  background: var(--veil);
+  border: 1px solid #2c2440;
+  padding: 16px 20px;
+  border-radius: 26px 14px 30px 12px / 16px 28px 14px 30px;
+}
+.map-side {
+  background: var(--veil);
+  border-left: 1px solid #2c2440;
+}
+.seat-panel {
+  background: linear-gradient(to bottom, rgba(6, 8, 1, 0.55), rgba(6, 8, 1, 0.9));
+  border-top: 1px solid #2c2440;
+}
+button {
+  border-radius: 9px 5px 10px 4px / 5px 10px 4px 9px;
+  transition: transform 0.08s ease, background 0.12s ease, border-color 0.12s ease;
+}
+button.primary {
+  box-shadow: 0 0 0 1px var(--accent), 0 0 14px rgba(212, 186, 0, 0.25);
+}
+h1,
+h2,
+h3 {
+  letter-spacing: 0.5px;
+}
+.setup-screen h2,
+.node-screen h2 {
+  color: var(--accent);
+  text-shadow: 3px 3px 0 #2a1f45;
+}
+
+/* ---------------------------------------------------------------- title */
+
+.title-screen h1 {
+  font-size: 104px;
+  color: var(--accent);
+  text-shadow: 5px 5px 0 #2a1f45, -2px -2px 0 rgba(208, 190, 255, 0.25);
+  filter: url(#boil);
+  line-height: 0.95;
+}
+.title-screen .sub {
+  color: var(--accent-2);
+  font-family: var(--font-mono);
+  font-size: 17px;
+  background: var(--veil);
+  padding: 10px 14px;
+  border-radius: 14px 6px 16px 4px;
+}
+
+/* ---------------------------------------------------------------- cards */
+
+.card,
+.mini {
+  background-color: var(--paper);
+  /* A flat wash of paper over the grain, so the grit shows faintly and the text stays readable. */
+  background-image: linear-gradient(rgba(207, 198, 168, 0.9), rgba(207, 198, 168, 0.9)), var(--grain);
+  /* One grain pixel is one art pixel at whatever scale the card is shown. */
+  background-size: auto, calc(640px / var(--k, 1)) calc(640px / var(--k, 1));
+  box-shadow: inset 0 0 22px rgba(40, 28, 8, 0.6), 0 7px 0 rgba(0, 0, 0, 0.55);
+  border-radius: 12px 7px 13px 6px / 8px 12px 7px 13px;
+}
+.card.pool-enemy,
+.mini.pool-enemy {
+  background-color: #c6a998;
+  background-image: linear-gradient(rgba(198, 169, 152, 0.9), rgba(198, 169, 152, 0.9)), var(--grain);
+  border-color: var(--foe);
+}
+.card .c-art,
+.mini .m-art {
+  border-radius: 6px 3px 7px 4px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.card .c-name,
+.mini .m-name {
+  letter-spacing: 0.3px;
+}
+/* Cards only ever translate. Rotating or stretching them would resample the art off the pixel grid. */
+.hand .card {
+  transform: translateY(var(--lift, 0px)) scale(var(--s, 0.55));
+  transition: transform 0.12s steps(3), left 0.2s ease, top 0.15s ease, filter 0.12s;
+}
+.hand .card:hover {
+  --lift: -24px;
+  filter: brightness(1.06);
+}
+.hand .card.picked {
+  --lift: -32px;
+  outline: 4px solid var(--accent);
+  box-shadow: 0 0 22px rgba(212, 186, 0, 0.45), inset 0 0 22px rgba(40, 28, 8, 0.6);
+}
+.mini {
+  transform: none;
+}
+/* Queued cards are shorter so they clear the enemy row. Hovering shows the full card. */
+.mini.queued {
+  transform: none;
+  height: 152px;
+  filter: saturate(0.6) brightness(0.72);
+}
+.mini.queued .m-kw {
+  display: none;
+}
+.mini.target {
+  outline: 3px solid var(--accent);
+  box-shadow: 0 0 18px rgba(212, 186, 0, 0.5);
+}
+.mini.lunge-up {
+  animation: lunge-up 0.34s steps(6);
+}
+.mini.lunge-down {
+  animation: lunge-down 0.34s steps(6);
+}
+@keyframes lunge-up {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translateY(8px);
+  }
+  48% {
+    transform: translateY(-44px);
+  }
+  70% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes lunge-down {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: translateY(-8px);
+  }
+  48% {
+    transform: translateY(44px);
+  }
+  70% {
+    transform: translateY(8px);
+  }
+}
+.mini.hit {
+  animation: hit-jolt 0.24s steps(4);
+}
+@keyframes hit-jolt {
+  0% {
+    transform: translate(-8px, 4px);
+    filter: brightness(2) saturate(0);
+  }
+  35% {
+    transform: translate(8px, -4px);
+    filter: none;
+  }
+  70% {
+    transform: translate(-4px, 0);
+  }
+  100% {
+    transform: none;
+  }
+}
+.mini.dying {
+  animation: crumble 0.34s steps(5) forwards;
+  opacity: 1;
+}
+@keyframes crumble {
+  0% {
+    filter: brightness(1.8) contrast(1.4);
+  }
+  40% {
+    transform: translateY(8px);
+    filter: grayscale(1) contrast(2);
+  }
+  100% {
+    transform: translateY(24px);
+    filter: grayscale(1) brightness(0.2);
+    opacity: 0;
+  }
+}
+.slot {
+  border: 1px dashed rgba(208, 190, 255, 0.16);
+  border-radius: 14px 8px 16px 6px / 8px 14px 6px 16px;
+}
+.slot.live {
+  border-color: var(--accent);
+  background: rgba(212, 186, 0, 0.1);
+}
+.seam {
+  border-left: 2px dotted rgba(208, 190, 255, 0.35);
+}
+.row-label {
+  color: var(--accent-2);
+  font-family: var(--font-mono);
+}
+
+/* ---------------------------------------------------------------- the teeth scale */
+
+.scale {
+  background: var(--veil);
+  border-radius: 24px 10px 26px 8px / 12px 24px 10px 26px;
+  padding: 10px 0;
+}
+.teeth {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+.tooth {
+  width: 30px;
+  height: 14px;
+  border-radius: 3px 3px 9px 9px;
+  background: rgba(235, 241, 228, 0.07);
+  border: 1px solid rgba(235, 241, 228, 0.12);
+}
+.tooth.win {
+  background: var(--candle);
+  border-color: #fff3a0;
+  box-shadow: 0 0 6px rgba(255, 207, 58, 0.45);
+}
+.tooth.loss {
+  background: var(--blood);
+  border-color: #ff6b5e;
+  border-radius: 9px 9px 3px 3px;
+}
+.tooth.mid {
+  height: 3px;
+  width: 44px;
+  background: var(--accent-2);
+  border: none;
+  border-radius: 2px;
+}
+.scale .s-val {
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- banners and feedback */
+
+.banner {
+  font-family: var(--font-display);
+  font-size: 58px;
+  color: var(--accent);
+  text-shadow: 4px 4px 0 #2a1f45, 0 0 24px rgba(0, 0, 0, 0.9);
+  filter: url(#boil);
+  letter-spacing: 1px;
+}
+.float-num {
+  font-family: var(--font-display);
+  font-size: 34px;
+  text-shadow: 3px 3px 0 #000;
+  animation: float-jitter 0.85s steps(8) forwards;
+}
+@keyframes float-jitter {
+  0% {
+    transform: translate(0, 0) scale(1.4);
+  }
+  20% {
+    transform: translate(-3px, -14px) scale(1);
+  }
+  100% {
+    transform: translate(2px, -50px);
+    opacity: 0;
+  }
+}
+.prompt {
+  background: var(--veil);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  border-radius: 12px 6px 14px 4px;
+}
+.toast {
+  font-family: var(--font-mono);
+  border-radius: 12px 6px 14px 4px;
+}
+.tip {
+  background: var(--veil);
+  border: 1px solid #2c2440;
+  border-radius: 14px 6px 16px 4px;
+}
+.tip b {
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- map */
+
+/* A node is a 16 by 16 painting at one art pixel per 4 units, so it never resamples. The boil filter would warp it. */
+.map-node {
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-radius: 52% 44% 56% 46% / 46% 56% 44% 54%;
+  background-size: 100% 100%;
+  background-origin: border-box;
+  image-rendering: pixelated;
+  border: 2px solid #2c2440;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+  font-size: 12px;
+  filter: saturate(0.55) brightness(calc(0.65 * var(--lit, 1)));
+  transition: transform 0.12s steps(2), filter 0.12s ease;
+}
+/* The dungeon painting is mostly unlit brick at this size. */
+.map-node.k-battle {
+  --lit: 1.8;
+}
+.map-node.reach {
+  border-color: var(--accent);
+  filter: brightness(var(--lit, 1));
+  box-shadow: 0 0 18px rgba(212, 186, 0, 0.45);
+}
+.map-node.reach:hover {
+  transform: translateY(-8px);
+}
+.map-node.here {
+  border-color: var(--accent-2);
+  filter: brightness(var(--lit, 1));
+  box-shadow: 0 0 22px rgba(208, 190, 255, 0.6);
+  background-color: transparent;
+}
+.map-node.done {
+  opacity: 0.35;
+}
+.coin {
+  border-color: var(--accent);
+  background: radial-gradient(circle at 35% 35%, #fff3a0, var(--accent) 45%, #6b5a00);
+  color: var(--accent-text);
+  font-weight: bold;
+  filter: url(#boil);
+}
+
