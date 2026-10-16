@@ -22,7 +22,7 @@ export default defineConfig({
   base: './',
   define: {
     __BUILD__: JSON.stringify(buildFingerprint()),
-    __RELAY_URL__: JSON.stringify(process.env.RELAY_URL ?? 'https://elipsusvenum-relay.maplesugarstone.workers.dev'),
+    __RELAY_URL__: JSON.stringify(process.env.RELAY_URL || 'https://elipsusvenum-relay.maplesugarstone.workers.dev'),
   },
   build: { outDir: 'dist', sourcemap: true, target: 'es2022', rollupOptions: { input: { main: 'index.html', review: 'review.html' } } },
   server: {
