@@ -57,7 +57,12 @@ export class BattleScreen {
   private dead = false;
   private keyHandler = (e: KeyboardEvent) => {
     if (e.key === 'Escape') this.cancel();
-    if (e.code === 'Space' && !(e.target instanceof HTMLInputElement) && !e.repeat) {
+    const typing = e.target instanceof HTMLInputElement;
+    if (!typing && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && (e.key === 'd' || e.key === 'D' || e.key === 's' || e.key === 'S')) {
+      this.pendingDraw = e.key.toLowerCase() === 'd' ? 'main' : 'side';
+      if (!this.busy) this.drawFromKey();
+    }
+    if (e.code === 'Space' && !typing && !e.repeat) {
       e.preventDefault();
       (document.activeElement as HTMLElement | null)?.blur?.();
       this.root.querySelector<HTMLElement>('.bell-obj.ready, .bell-obj.rung')?.click();
@@ -66,6 +71,16 @@ export class BattleScreen {
   private drag: { seat: Seat; uid: number; startX: number; startY: number; grabX: number; grabY: number; live: boolean; ghost: HTMLDivElement | null } | null = null;
   private hoverSlot: HTMLElement | null = null;
   private suppressClick = false;
+  /** A draw key pressed during an animation, used once it ends. */
+  private pendingDraw: 'main' | 'side' | null = null;
+
+  private drawFromKey(): void {
+    const from = this.pendingDraw;
+    this.pendingDraw = null;
+    if (!from || !this.game.battle) return;
+    const seat = this.mine.find((x) => needsDraw(this.b, x) && !this.b.over);
+    if (seat !== undefined) this.act(seat, { t: 'draw', from });
+  }
 
   constructor(app: App) {
     this.app = app;
@@ -145,6 +160,7 @@ export class BattleScreen {
     }
     this.busy = false;
     if (!this.dead && this.app.session?.game.battle) this.renderAll();
+    if (!this.dead && this.pendingDraw) this.drawFromKey();
   }
 
   private speed(): number {
@@ -517,6 +533,7 @@ export class BattleScreen {
       if (!mineSeat && s.rung) res.append(h('div', { class: 'r-rung' }, 'Rang the bell'));
       panel.append(res);
       panel.append(this.renderHand(seat, mineSeat));
+      if (wantDraw) panel.append(this.drawChoice(seat));
     }
     this.soloBell = null;
     if (this.app.solo()) {
@@ -545,6 +562,28 @@ export class BattleScreen {
     );
     hoverTip(el, 'End turn', 'Your creatures attack, then the enemy attacks and moves up. Press Space to ring the bell.');
     return el;
+  }
+
+  /** Two big piles over the hand while a draw is owed, since the turn cannot go on until one is clicked. */
+  private drawChoice(seat: Seat): HTMLDivElement {
+    const s = this.b.seats[seat];
+    const box = h('div', { class: `draw-choice s${seat}` }, h('div', { class: 'dc-title' }, this.app.solo() ? `Draw a card for ${this.charName(seat)}` : 'Draw a card'));
+    const row = h('div', { class: 'dc-row' });
+    const pile = (label: string, sub: string, count: number, from: 'main' | 'side', key: string) => {
+      const can = count > 0;
+      const el = h('div', { class: `big-pile ${from} ${can ? '' : 'empty'}`, onclick: () => can && this.act(seat, { t: 'draw', from }) },
+        h('div', { class: 'back' }), h('div', { class: 'back' }), h('div', { class: 'back' }),
+        h('div', { class: 'bp-count' }, String(count)),
+        h('div', { class: 'bp-label' }, label, h('span', { class: 'bp-key' }, key)),
+        h('div', { class: 'bp-sub' }, sub));
+      return el;
+    };
+    row.append(
+      pile('Deck', 'Your next card', s.deck.length + s.discard.length, 'main', 'D'),
+      pile('Side', 'A free Placeholder', s.side.length, 'side', 'S'),
+    );
+    box.append(row);
+    return box;
   }
 
   /** Whether any card in these seats' hands could be paid for right now. */
@@ -920,7 +959,7 @@ export class BattleScreen {
       text += '. Right click to cancel.';
     } else if (this.game.battle && !this.game.battle.over) {
       const wait = this.mine.filter((s) => needsDraw(this.b, s));
-      if (wait.length) text = `Draw a card for ${wait.map((s) => this.charName(s)).join(' and ')}: click Deck or Side.`;
+      if (wait.length) text = `Draw a card for ${wait.map((s) => this.charName(s)).join(' and ')}: click a pile, or press D or S.`;
     }
     this.promptEl.textContent = text;
     this.promptEl.style.display = text ? '' : 'none';
