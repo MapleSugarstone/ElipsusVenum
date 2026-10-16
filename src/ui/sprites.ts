@@ -43,6 +43,7 @@ const SPRITES: Record<string, string[][]> = {
   blood: [['..k..', '.krk.', '.krk.', 'krrrk', 'klrrk', 'krrmk', '.kkk.']],
   'cost-bone': [['.k...k.', 'kpkkkpk', '.kpppk.', 'kqkkkqk', '.k...k.']],
   'cost-energy': [['..k..', '.kbk.', 'kbcck', 'kccek', '.kek.', '..k..']],
+  'cost-energy-empty': [['..k..', '.kzk.', 'kzxxk', 'kxxxk', '.kxk.', '..k..']],
   arrow: [['...k...', '...kk..', 'kkkkfk.', 'kffffyk', 'kkkkfk.', '...kk..', '...k...']],
   bell: [[
     '.....kkkk.....',

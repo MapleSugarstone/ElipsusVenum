@@ -890,14 +890,28 @@ html {
     background-position: -48px 0;
   }
 }
+/* Six cells and the bone count fit the panel's left column. Energy above six wraps to a second row. */
 .cell {
-  width: 28px;
-  height: 32px;
+  width: 20px;
+  height: 24px;
   clip-path: none;
-  background: var(--spr-energy-empty) 0 0 / 100% 100%;
+  background: var(--spr-cost-energy-empty) 0 0 / 100% 100%;
 }
 .cell.full {
-  background: var(--spr-energy) 0 0 / 100% 100%;
+  background: var(--spr-cost-energy) 0 0 / 100% 100%;
+}
+.cells {
+  flex-wrap: wrap;
+  max-width: 136px;
+  row-gap: 4px;
+}
+.r-stats {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.seat-panel.s1 .r-stats,
+.seat-panel.s1 .cells {
+  justify-content: flex-end;
 }
 .teeth {
   gap: 2px;
