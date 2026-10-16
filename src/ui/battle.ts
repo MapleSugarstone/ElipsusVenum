@@ -8,6 +8,7 @@ import { fillMini, fullCard } from './card.ts';
 import { banner, clear, floatNum, h, sleep, toast } from './dom.ts';
 import { hideInspect, inspectable, inspectCard } from './inspect.ts';
 import { hoverTip } from './hud.ts';
+import { grid } from './grid.ts';
 import type { App } from './app.ts';
 import type { Presence, Update } from './session.ts';
 import { boardView, type BoardView, type CardView } from './view.ts';
@@ -26,7 +27,7 @@ export const laneX = (lane: number) => LEFT + lane * (LANE_W + GAP) + (lane >= 4
 
 type Sel =
   | null
-  | { kind: 'card'; seat: Seat; uid: number; sac: number[]; lane?: number; tg: SlotRef[] }
+  | { kind: 'card'; seat: Seat; uid: number; sac: number[]; lane?: number; want?: number; tg: SlotRef[] }
   | { kind: 'item'; seat: Seat; slot: number; tg: SlotRef[] }
   | { kind: 'mark'; seat: Seat; tg: SlotRef[] };
 
@@ -56,7 +57,15 @@ export class BattleScreen {
   private dead = false;
   private keyHandler = (e: KeyboardEvent) => {
     if (e.key === 'Escape') this.cancel();
+    if (e.code === 'Space' && !(e.target instanceof HTMLInputElement) && !e.repeat) {
+      e.preventDefault();
+      (document.activeElement as HTMLElement | null)?.blur?.();
+      this.root.querySelector<HTMLElement>('.bell-obj.ready, .bell-obj.rung')?.click();
+    }
   };
+  private drag: { seat: Seat; uid: number; startX: number; startY: number; grabX: number; grabY: number; live: boolean; ghost: HTMLDivElement | null } | null = null;
+  private hoverSlot: HTMLElement | null = null;
+  private suppressClick = false;
 
   constructor(app: App) {
     this.app = app;
@@ -71,6 +80,8 @@ export class BattleScreen {
           style: { left: `${laneX(lane)}px`, top: `${ROW_Y[row]}px` },
           onclick: (e: MouseEvent) => (e.altKey ? this.sendPing(row, lane) : this.clickSlot(row, lane)),
         });
+        slot.dataset.row = row;
+        slot.dataset.lane = String(lane);
         this.slots.set(`${row}${lane}`, slot);
         this.board.append(slot);
       }
@@ -91,6 +102,7 @@ export class BattleScreen {
     this.dead = true;
     this.queue = [];
     window.removeEventListener('keydown', this.keyHandler);
+    this.endDrag();
     hideInspect();
     this.root.remove();
   }
@@ -300,6 +312,7 @@ export class BattleScreen {
     this.renderPanels();
     this.renderPrompt();
     this.renderRules();
+    if (this.sel) this.highlight();
   }
 
   private rulesEl: HTMLDivElement | null = null;
@@ -410,6 +423,8 @@ export class BattleScreen {
 
   private renderPanels(): void {
     const b = this.b;
+    // Old bells go first: the loop below adds the co-op bell, and the solo bell comes after it.
+    for (const old of this.root.querySelectorAll('.bell-obj')) old.remove();
     for (const seat of [0, 1] as Seat[]) {
       const panel = this.panels[seat];
       clear(panel);
@@ -494,17 +509,20 @@ export class BattleScreen {
         items.append(icon);
       });
       if (s.items.some(Boolean)) res.append(items);
-      if (mineSeat && !this.app.solo()) this.root.append(this.bell(s.rung ? 'rung' : !s.drew || b.over !== null ? 'off' : 'ready', () => this.act(seat, { t: s.rung ? 'unring' : 'ring' }), s.rung ? 'Waiting for your partner' : 'Strike the bell'));
+      if (mineSeat && !this.app.solo()) {
+        const state = s.rung ? 'rung' : !s.drew || b.over !== null ? 'off' : 'ready';
+        const [main, sub] = s.rung ? ['Waiting', 'Click to take back'] : state === 'off' ? ['Draw first', 'Deck or Side'] : ['End turn', 'Space'];
+        this.root.append(this.bell(state, () => this.act(seat, { t: s.rung ? 'unring' : 'ring' }), main, sub, state === 'ready' && !this.canPlayAny([seat])));
+      }
       if (!mineSeat && s.rung) res.append(h('div', { class: 'r-rung' }, 'Rang the bell'));
       panel.append(res);
       panel.append(this.renderHand(seat, mineSeat));
     }
-    this.soloBell?.remove();
     this.soloBell = null;
-    for (const old of this.root.querySelectorAll('.bell-obj')) old.remove();
     if (this.app.solo()) {
       const allDrew = b.seats.every((x) => !x.alive || x.drew);
-      this.soloBell = this.bell(allDrew && b.over === null ? 'ready' : 'off', () => this.ringAll(), allDrew ? 'Strike the bell' : 'Draw first');
+      const live = this.mine.filter((x) => b.seats[x].alive);
+      this.soloBell = this.bell(allDrew && b.over === null ? 'ready' : 'off', () => this.ringAll(), allDrew ? 'End turn' : 'Draw first', allDrew ? 'Space' : 'Deck or Side', allDrew && !this.canPlayAny(live));
       this.soloBell.classList.add('solo');
       this.root.append(this.soloBell);
     }
@@ -512,18 +530,34 @@ export class BattleScreen {
 
   private soloBell: HTMLDivElement | null = null;
 
-  /** The bell is an object you strike, not a button. */
-  private bell(state: 'ready' | 'rung' | 'off', onRing: () => void, label: string): HTMLDivElement {
+  /** The bell that ends the turn, with a plate under it naming what it does. It pulses when nothing in hand is playable. */
+  private bell(state: 'ready' | 'rung' | 'off', onRing: () => void, main: string, sub: string, idle: boolean): HTMLDivElement {
     const el = h('div', {
-      class: `bell-obj ${state}`,
+      class: `bell-obj ${state} ${idle ? 'idle' : ''}`,
       onclick: () => {
         if (state === 'off') return;
         el.classList.add('ringing');
         onRing();
       },
-    }, h('div', { class: 'knob' }), h('div', { class: 'dome' }), h('div', { class: 'lip' }), h('div', { class: 'clapper' }), h('div', { class: 'bell-label' }, label));
-    hoverTip(el, 'The bell', 'Ends your turn. Your creatures attack, then the enemy attacks and moves up.');
+    },
+      h('div', { class: 'knob' }), h('div', { class: 'dome' }), h('div', { class: 'lip' }), h('div', { class: 'clapper' }),
+      h('div', { class: 'bell-plate' }, h('div', { class: 'bell-main' }, main), h('div', { class: 'bell-sub' }, sub)),
+    );
+    hoverTip(el, 'End turn', 'Your creatures attack, then the enemy attacks and moves up. Press Space to ring the bell.');
     return el;
+  }
+
+  /** Whether any card in these seats' hands could be paid for right now. */
+  private canPlayAny(seats: Seat[]): boolean {
+    const b = this.b;
+    return seats.some((seat) => {
+      const s = b.seats[seat];
+      const blood = lanesOf(seat).reduce((n, lane) => n + (b.p[lane] ? sacValue(b.p[lane]!) : 0), 0);
+      return s.hand.some((c) => {
+        const cost = costOf(b, seat, c);
+        return !hasKw(c, 'Unplayable') && cost.energy <= s.energy && cost.bones <= s.bones && cost.blood <= blood;
+      });
+    });
   }
 
   private renderHand(seat: Seat, mineSeat: boolean): HTMLDivElement {
@@ -545,8 +579,10 @@ export class BattleScreen {
       el.style.setProperty('--s', String(scale));
       el.style.left = `${i * step}px`;
       el.style.top = picked ? '-14px' : '8px';
-      el.addEventListener('click', () => this.clickHand(seat, c.uid));
-      el.addEventListener('mouseenter', () => inspectCard(c.id, { up: c.up, ab: c.ab, power: c.power, health: c.health, cost: costOf(this.b, seat, c) }, el.getBoundingClientRect()));
+      if (this.drag?.live && this.drag.uid === c.uid) el.classList.add('dragging');
+      el.addEventListener('pointerdown', (e) => this.pressHand(e, seat, c.uid, el));
+      el.addEventListener('click', () => (this.suppressClick ? undefined : this.clickHand(seat, c.uid)));
+      el.addEventListener('mouseenter', () => !this.drag?.live && inspectCard(c.id, { up: c.up, ab: c.ab, power: c.power, health: c.health, cost: costOf(this.b, seat, c) }, el.getBoundingClientRect()));
       el.addEventListener('mouseleave', hideInspect);
       hand.append(el);
     });
@@ -644,6 +680,11 @@ export class BattleScreen {
     if (need?.kind === 'ready') return this.commit();
     if (need?.kind === 'lane' && this.sel?.kind === 'card') {
       const options = this.validRefs(need);
+      const want = this.sel.want;
+      if (want !== undefined && options.some((o) => o.lane === want)) {
+        this.sel.lane = want;
+        return this.advanceSel();
+      }
       if (options.length === 1 && this.sel.sac.length === 1) {
         this.sel.lane = options[0].lane;
         return this.advanceSel();
@@ -693,14 +734,14 @@ export class BattleScreen {
     return out;
   }
 
-  private clickSlot(row: Row, lane: number): void {
-    if (this.busy) return;
+  private clickSlot(row: Row, lane: number): boolean {
+    if (this.busy) return false;
     const sel = this.sel;
     const need = this.need();
-    if (!sel || !need || need.kind === 'ready') return;
+    if (!sel || !need || need.kind === 'ready') return false;
     const valid = this.validRefs(need);
     const hit = valid.find((r) => r.lane === lane && (need.kind === 'tg' && need.spec.row === 'lane' ? true : r.row === row));
-    if (!hit) return;
+    if (!hit) return false;
     if (need.kind === 'sac' && sel.kind === 'card') {
       sel.sac = sel.sac.includes(lane) ? sel.sac.filter((l) => l !== lane) : [...sel.sac, lane];
     } else if (need.kind === 'lane' && sel.kind === 'card') {
@@ -709,6 +750,7 @@ export class BattleScreen {
       sel.tg.push(hit);
     }
     this.advanceSel();
+    return true;
   }
 
   private highlight(): void {
@@ -723,7 +765,8 @@ export class BattleScreen {
         if (c) this.minis.get(c.uid)?.classList.add('sac');
       }
     }
-    for (const ref of this.validRefs(need)) {
+    this.board.classList.toggle('drop-any', !!this.drag?.live && need.kind === 'ready');
+    for (const ref of this.drag?.live ? this.dropRefs(need) : this.validRefs(need)) {
       const rows: Row[] = need.kind === 'tg' && need.spec.row === 'lane' ? ['p', 'e'] : [ref.row];
       for (const row of rows) {
         this.slots.get(`${row}${ref.lane}`)?.classList.add('live');
@@ -733,11 +776,144 @@ export class BattleScreen {
     }
   }
 
+  // ------------------------------------------------------------ dragging
+
+  private pressHand(e: PointerEvent, seat: Seat, uid: number, el: HTMLElement): void {
+    if (e.button !== 0 || this.busy || !this.mine.includes(seat)) return;
+    const r = el.getBoundingClientRect();
+    const s = grid.s;
+    this.drag = { seat, uid, startX: e.clientX, startY: e.clientY, grabX: (e.clientX - r.left) / s, grabY: (e.clientY - r.top) / s, live: false, ghost: null };
+    window.addEventListener('pointermove', this.onMove);
+    window.addEventListener('pointerup', this.onUp);
+    window.addEventListener('pointercancel', this.onCancel);
+  }
+
+  private onMove = (e: PointerEvent): void => {
+    const d = this.drag;
+    if (!d) return;
+    if (!d.live) {
+      if (Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < 8) return;
+      if (!this.beginDrag(d)) return this.endDrag();
+    }
+    const [x, y] = this.toStage(e.clientX, e.clientY);
+    d.ghost!.style.left = `${x - d.grabX}px`;
+    d.ghost!.style.top = `${y - d.grabY}px`;
+    const ref = this.refAt(e.clientX, e.clientY);
+    const need = this.need();
+    const ok = ref && need && this.dropRefs(need).some((r) => r.lane === ref.lane && (r.row === ref.row || (need.kind === 'tg' && need.spec.row === 'lane')));
+    const slot = ok ? this.slots.get(`${ref.row}${ref.lane}`) ?? null : null;
+    if (slot !== this.hoverSlot) {
+      this.hoverSlot?.classList.remove('drop-hover');
+      slot?.classList.add('drop-hover');
+      this.hoverSlot = slot;
+    }
+  };
+
+  private onUp = (e: PointerEvent): void => {
+    const d = this.drag;
+    const live = !!d?.live;
+    this.endDrag();
+    if (!d || !live) return;
+    // The click that follows this pointerup must not select the card again.
+    this.suppressClick = true;
+    setTimeout(() => (this.suppressClick = false), 0);
+    this.drop(e.clientX, e.clientY);
+  };
+
+  private onCancel = (): void => {
+    const live = !!this.drag?.live;
+    this.endDrag();
+    if (live) this.cancel();
+  };
+
+  private beginDrag(d: NonNullable<BattleScreen['drag']>): boolean {
+    const b = this.b;
+    if (needsDraw(b, d.seat)) return toast(this.root, 'Draw a card first'), false;
+    const c = b.seats[d.seat].hand.find((x) => x.uid === d.uid);
+    if (!c) return false;
+    const cost = costOf(b, d.seat, c);
+    if (b.seats[d.seat].energy < cost.energy) return toast(this.root, 'Not enough energy'), false;
+    if (b.seats[d.seat].bones < cost.bones) return toast(this.root, 'Not enough bones'), false;
+    hideInspect();
+    d.live = true;
+    this.sel = { kind: 'card', seat: d.seat, uid: d.uid, sac: [], tg: [] };
+    d.ghost = h('div', { class: 'drag-ghost' }, fullCard(c.id, { up: c.up, ab: c.ab, power: c.power, health: c.health, maxHealth: c.maxHealth, cost: c.cost, scale: 0.55 }));
+    this.root.append(d.ghost);
+    this.renderPanels();
+    this.renderPrompt();
+    this.highlight();
+    return true;
+  }
+
+  private endDrag(): void {
+    window.removeEventListener('pointermove', this.onMove);
+    window.removeEventListener('pointerup', this.onUp);
+    window.removeEventListener('pointercancel', this.onCancel);
+    this.drag?.ghost?.remove();
+    this.hoverSlot?.classList.remove('drop-hover');
+    this.hoverSlot = null;
+    this.board.classList.remove('drop-any');
+    this.drag = null;
+  }
+
+  private drop(x: number, y: number): void {
+    const sel = this.sel;
+    const need = this.need();
+    if (!sel || sel.kind !== 'card' || !need) return this.cancel();
+    const [, sy] = this.toStage(x, y);
+    // The seat panels start at 618, so anything above that is the board.
+    const onBoard = sy < 618;
+    const ref = this.refAt(x, y);
+    if (need.kind === 'ready') return onBoard ? this.commit() : this.cancel();
+    if (need.kind === 'sac') {
+      if (ref && ref.row === 'p' && lanesOf(sel.seat).includes(ref.lane)) {
+        sel.want = ref.lane;
+        if (this.b.p[ref.lane]) this.clickSlot('p', ref.lane);
+        else this.advanceSel();
+        return;
+      }
+      return onBoard ? this.advanceSel() : this.cancel();
+    }
+    if (!ref || !this.clickSlot(ref.row, ref.lane)) this.cancel();
+  }
+
+  /** Where a dragged card may land: the same as a click, plus your own lanes for a card that still needs blood. */
+  private dropRefs(need: Need): SlotRef[] {
+    const sel = this.sel;
+    if (need.kind === 'sac' && sel?.kind === 'card') return lanesOf(sel.seat).map((lane) => ({ row: 'p' as Row, lane }));
+    return this.validRefs(need);
+  }
+
+  private toStage(x: number, y: number): [number, number] {
+    const r = this.app.stage.getBoundingClientRect();
+    return [(x - r.left) / grid.s, (y - r.top) / grid.s];
+  }
+
+  /** The board slot under a window point, through any creature standing in it. */
+  private refAt(x: number, y: number): SlotRef | null {
+    for (const el of document.elementsFromPoint(x, y)) {
+      const node = el as HTMLElement;
+      if (node.dataset.row && node.dataset.lane !== undefined) return { row: node.dataset.row as Row, lane: Number(node.dataset.lane) };
+      const mini = node.closest<HTMLElement>('.mini');
+      if (mini?.dataset.uid) {
+        const ref = this.refOf(Number(mini.dataset.uid));
+        if (ref) return ref;
+      }
+    }
+    return null;
+  }
+
   private renderPrompt(): void {
     const need = this.need();
     const sel = this.sel;
     let text = '';
-    if (sel && need) {
+    if (sel && need && this.drag?.live) {
+      if (need.kind === 'ready') text = 'Drop it on the board to cast it';
+      else if (need.kind === 'sac') text = 'Drop it on a creature to sacrifice it there, or in an empty lane';
+      else if (need.kind === 'lane') text = 'Drop it in one of your lanes';
+      else if (need.kind === 'tg') text = TARGET_PROMPT(need.spec);
+      text += '. Drop it back on your hand to cancel.';
+    } else if (sel && need) {
       if (need.kind === 'sac') text = `Choose ${need.n} more blood to sacrifice`;
       else if (need.kind === 'lane') text = 'Choose a lane for the creature';
       else if (need.kind === 'tg') text = sel.kind === 'mark' ? 'Choose an enemy in your partner\'s lanes to mark' : TARGET_PROMPT(need.spec);
