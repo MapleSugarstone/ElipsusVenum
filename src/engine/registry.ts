@@ -34,6 +34,12 @@ export interface Hooks {
   terrainEnter?(c: Ctx, card: CardInst): void;
   /** Terrain: the end of the players' turn. */
   terrainEnd?(c: Ctx): void;
+  /** Seat: an enemy creature in this seat's half dies. */
+  foeDies?(c: Ctx, dead: CardInst): void;
+  /** Seat: one of this seat's candles goes out. The seat dies after this hook if no candle is lit. */
+  candleOut?(c: Ctx, left: number): void;
+  /** Seat: a living seat wins its half. Fires for both seats. */
+  halfWon?(c: Ctx, winner: Seat): void;
 }
 
 export interface AbilityDef extends Hooks {
@@ -112,6 +118,7 @@ export const CARDS = new Map<string, CardDef>();
 const HOOK_NAMES: (keyof Hooks)[] = [
   'play', 'enter', 'death', 'sacrificed', 'struck', 'kill', 'turnStart', 'turnEnd', 'allyDies', 'foePlaced',
   'powerMod', 'seatPlay', 'partnerPlay', 'seatSac', 'battleStart', 'tick', 'evoke', 'chosen', 'later', 'terrainEnter', 'terrainEnd',
+  'foeDies', 'candleOut', 'halfWon',
 ];
 
 export function defAbility(def: AbilityDef): AbilityDef {
@@ -209,6 +216,18 @@ export interface RelicDef extends Hooks {
   pool: Pool;
   /** Run-level effect applied once when the relic is gained. */
   gain?(run: unknown, seat: Seat): void;
+  /** Run level, given the event toolbox: the players enter a node of this kind. */
+  enterNode?(r: unknown, seat: Seat, kind: string): void;
+  /** Run level, given the event toolbox: the players win a battle of this tier. */
+  afterWin?(r: unknown, seat: Seat, tier: string): void;
+  /** Run level, given the event toolbox: this seat's last candle would go out outside a battle. True keeps it lit. */
+  dying?(r: unknown, seat: Seat): boolean;
+  /** Treasure chests and elite fights offer this many more relics to choose from. */
+  moreRelics?: number;
+  /** Treasure chests let this seat take this many more relics. */
+  morePicks?: number;
+  /** Shops sell this seat cards and items for this many fewer teeth. */
+  discount?: number;
 }
 export const RELICS = new Map<string, RelicDef>();
 export function defRelic(def: RelicDef): RelicDef {

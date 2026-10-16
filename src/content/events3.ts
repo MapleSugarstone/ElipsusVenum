@@ -30,7 +30,14 @@ defEvent({
         return 'The machine falls on someone.';
       },
     },
-    { label: 'Leave it', text: 'Nothing happens.', run: () => 'It hums at you as you go.' },
+    {
+      label: 'Leave it',
+      text: 'Each of you gains the Coin Return, a relic.',
+      run(r) {
+        r.each((_, i) => r.giveRelic(i, 'coin-return'));
+        return 'It hums at you as you go. Something rattles in the coin return. It follows you.';
+      },
+    },
   ],
 });
 
@@ -115,6 +122,16 @@ defEvent({
         return win ? 'The shark pays up and looks at the floor.' : 'The shark smiles with all of them.';
       },
     },
+    {
+      label: 'Play with your own die',
+      secret: true,
+      text: 'Each of you gains 12 teeth.',
+      ok: (r) => r.anyRelic('loaded-die'),
+      run(r) {
+        r.each((_, i) => r.teeth(i, 12));
+        return 'The die comes up the same way every time. The shark pays and leaves without his fin.';
+      },
+    },
   ],
 });
 
@@ -136,6 +153,20 @@ defEvent({
       run(r) {
         r.each((_, i) => r.candle(i, 1));
         return 'Nobody shushes you. There is nobody else here.';
+      },
+    },
+    {
+      label: 'Return the overdue book',
+      secret: true,
+      text: 'Each Overdue Library Book breaks. Each of you adds 2 random rare cards to your deck.',
+      ok: (r) => r.anyRelic('overdue-book'),
+      run(r) {
+        r.each((_, i) => {
+          r.loseRelic(i, 'overdue-book');
+          r.addCard(i, r.randomCard(i, 'rare'));
+          r.addCard(i, r.randomCard(i, 'rare'));
+        });
+        return 'There is no fine. He just wanted it back. He gives you two more to borrow forever.';
       },
     },
   ],
@@ -187,6 +218,14 @@ defEvent({
         return 'Your creatures watch this and try harder.';
       },
     },
+    {
+      label: 'Let it follow you',
+      text: 'Each of you gains the Dog Whistle, a relic.',
+      run(r) {
+        r.each((_, i) => r.giveRelic(i, 'dog-whistle'));
+        return 'It follows you at a distance. When you whistle, it brings friends.';
+      },
+    },
   ],
 });
 
@@ -213,6 +252,19 @@ defEvent({
       run(r) {
         r.each((_, i) => r.addCard(i, 'raise-the-dead'));
         return 'The plots were full after all.';
+      },
+    },
+    {
+      label: 'Bury the Unused Respawn',
+      secret: true,
+      text: 'Each Unused Respawn breaks. Each of you gains a random rare relic.',
+      ok: (r) => r.anyRelic('unused-respawn'),
+      run(r) {
+        r.each((_, i) => {
+          r.loseRelic(i, 'unused-respawn');
+          r.relic(i, 'rare');
+        });
+        return 'You give the respawn back to the people it was for. Something under the dirt says thank you.';
       },
     },
   ],
@@ -268,6 +320,16 @@ defEvent({
         return 'Something important is gone. The game still runs. Mostly.';
       },
     },
+    {
+      label: 'Tell him how his story ends',
+      secret: true,
+      text: 'Each of you gains a random boss relic.',
+      ok: (r) => r.flagged('heard-story'),
+      run(r) {
+        r.each((_, i) => r.relic(i, 'boss'));
+        return 'You listened to the whole campfire story, so you know the ending he never wrote. He writes it down. It is good.';
+      },
+    },
   ],
 });
 
@@ -289,6 +351,42 @@ defEvent({
       run(r) {
         r.each((_, i) => r.teeth(i, 6));
         return 'They pay you to watch. It is that kind of circus.';
+      },
+    },
+    {
+      label: 'Enter the dog in the show',
+      secret: true,
+      text: 'Each of you gains 10 teeth and upgrades a random creature.',
+      ok: (r) => r.anyRelic('dog-whistle'),
+      run(r) {
+        r.each((_, i) => {
+          r.teeth(i, 10);
+          r.upgradeRandom(i, 'creature');
+        });
+        return 'The dog jumps through every hoop. Some of the hoops were not there before.';
+      },
+    },
+  ],
+});
+
+defEvent({
+  id: 'lost-and-found', acts: [1, 2, 3], title: 'Lost and Found',
+  intro: 'This is the lost and found. Everything in it is something I lost. You can take one thing. Or you can be good.',
+  options: [
+    {
+      label: 'Keep something',
+      text: 'Each of you gains a random common relic.',
+      run(r) {
+        r.each((_, i) => r.relic(i, 'common'));
+        return 'Finders keepers. He wrote that rule too.';
+      },
+    },
+    {
+      label: 'Turn everything in',
+      text: 'Each of you gains the Honest Badge, a relic.',
+      run(r) {
+        r.each((_, i) => r.giveRelic(i, 'honest-badge'));
+        return 'He pins a badge on each of you. He drew it himself. Shopkeepers will believe it.';
       },
     },
   ],

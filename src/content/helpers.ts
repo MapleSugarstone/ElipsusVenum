@@ -31,6 +31,10 @@ export function pray(c: Ctx, n: number): void {
     c.me.c.blessed = 1;
     c.emit({ k: 'blessed', seat: c.seat });
     c.energy(3);
+    if (c.hasRelic('royal-seal') && c.b.seats[c.partner].alive) {
+      c.energy(3, c.partner);
+      c.draw(1, c.partner);
+    }
   }
 }
 

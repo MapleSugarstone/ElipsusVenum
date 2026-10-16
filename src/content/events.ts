@@ -97,10 +97,10 @@ defEvent({
     },
     {
       label: 'Kick it and run',
-      text: 'Each of you gains 4 teeth.',
+      text: 'Each of you gains the Mimic Tooth, a relic.',
       run(r) {
-        r.each((_, i) => r.teeth(i, 4));
-        return 'It whimpers. Some teeth fall out.';
+        r.each((_, i) => r.giveRelic(i, 'mimic-tooth'));
+        return 'It whimpers. A tooth falls out. You take it with you.';
       },
     },
   ],
@@ -124,9 +124,11 @@ defEvent({
     },
     {
       label: 'Leave it alone',
-      text: 'Nothing happens.',
-      run() {
-        return 'He looks relieved.';
+      text: 'Each of you gains the Unused Respawn, a relic.',
+      run(r) {
+        r.each((_, i) => r.giveRelic(i, 'unused-respawn'));
+        r.flag('respawn-spared');
+        return 'He looks relieved. When you look back, it is still glowing. It might still work later.';
       },
     },
   ],

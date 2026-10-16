@@ -91,6 +91,7 @@ export class RunCtx {
     const s = this.seat(i);
     if (!s.alive) return;
     s.candles = Math.max(0, Math.min(3, s.candles + n));
+    if (s.candles === 0 && s.relics.some((id) => RELICS.get(id)?.dying?.(this, i))) s.candles = 1;
     this.ev.push({ k: 'runCandle', seat: i, v: s.candles });
     if (s.candles === 0) {
       s.alive = false;
@@ -109,7 +110,44 @@ export class RunCtx {
     this.ev.push({ k: 'revive', seat: i });
     return true;
   }
-  relic(i: Seat, rarity: Rarity = 'common'): string | null {
+  /** Relights a candle, or pays 3 teeth when the seat already has `cap` candles. */
+  relight(i: Seat, cap = 3): void {
+    const s = this.seat(i);
+    if (!s.alive) return;
+    if (s.candles < cap) this.candle(i, 1);
+    else this.teeth(i, 3);
+  }
+  hasRelic(i: Seat, id: string): boolean {
+    return this.seat(i).relics.includes(id);
+  }
+  anyRelic(id: string): boolean {
+    return SEATS.some((i) => this.hasRelic(i, id));
+  }
+  /** Gives a named relic. A seat that already has it gets nothing. */
+  giveRelic(i: Seat, id: string): boolean {
+    const s = this.seat(i);
+    if (s.relics.includes(id) || !RELICS.has(id)) return false;
+    s.relics.push(id);
+    RELICS.get(id)?.gain?.(this.g.run, i);
+    this.ev.push({ k: 'relicGain', seat: i, id });
+    return true;
+  }
+  loseRelic(i: Seat, id: string): void {
+    const s = this.seat(i);
+    const at = s.relics.indexOf(id);
+    if (at < 0) return;
+    s.relics.splice(at, 1);
+    this.ev.push({ k: 'relicBreak', seat: i, id });
+  }
+  /** Records a choice for later events to find. */
+  flag(name: string, n = 1): void {
+    const f = (this.run.flags ??= {});
+    f[name] = (f[name] ?? 0) + n;
+  }
+  flagged(name: string): boolean {
+    return (this.run.flags?.[name] ?? 0) > 0;
+  }
+  relic(i: Seat, rarity: Rarity | 'boss' = 'common'): string | null {
     const s = this.seat(i);
     const pool = [...RELICS.values()]
       .filter((r) => r.rarity === rarity && (r.pool === 'shared' || r.pool === s.char) && !s.relics.includes(r.id))
@@ -142,6 +180,8 @@ export class RunCtx {
 
 export interface EventOption {
   label: string;
+  /** A secret option is hidden unless `ok` allows it, rather than shown greyed out. */
+  secret?: boolean;
   /** What the option does, stated plainly. */
   text: string;
   ok?(r: RunCtx): boolean;

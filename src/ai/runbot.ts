@@ -61,11 +61,11 @@ export function chooseRunAction(g: Game, seat: Seat, opts: BotOptions = {}): Gam
     return { t: 'lock' };
   }
   const tryAct = (a: GameAction): GameAction | null => (legalGame(g, seat, a) ? null : a);
+  if (node.relics?.[seat]?.length && (node.picks?.[seat] ?? 0) > 0) return { t: 'relic', i: 0 };
   switch (node.kind) {
     case 'reward':
     case 'cards':
     case 'bossReward': {
-      if (node.kind === 'bossReward' && node.relics?.[seat].length) return { t: 'relic', i: 0 };
       const offers = node.offers?.[seat] ?? [];
       if (offers.length) {
         const pick = offers.findIndex((o) => cardDef(o.id).rarity !== 'common');

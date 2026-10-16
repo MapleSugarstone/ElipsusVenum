@@ -224,6 +224,9 @@ button:disabled {
 .relic-icon.r-boss {
   background: var(--danger);
 }
+.relic-icon.r-special {
+  background: var(--candle);
+}
 .item-icon {
   background: var(--ok);
 }

@@ -1,6 +1,6 @@
 import { costOf, legal, needsDraw, sacValue, targetOk } from '../engine/battle.ts';
 import { hasKw } from '../engine/fx.ts';
-import { ability, BOSSES, card as cardDef, ITEMS, type TargetSpec } from '../engine/registry.ts';
+import { ability, BOSSES, card as cardDef, ITEMS, RELICS, type TargetSpec } from '../engine/registry.ts';
 import { LANES, lanesOf, other, ownerOf, type Battle, type BattleAction, type Ev, type Row, type Seat, type SlotRef } from '../engine/types.ts';
 import { CHARACTERS } from '../content/index.ts';
 import { dealerLine } from '../content/dealer.ts';
@@ -239,6 +239,15 @@ export class BattleScreen {
         music.stinger('candle');
         this.app.shake(8, 320);
         await wait(700);
+        return;
+      case 'relight':
+        banner(this.root, `${this.charName(ev.seat as Seat)} keeps a candle lit`, 'var(--candle)');
+        sfx('candle');
+        await wait(600);
+        return;
+      case 'relicBreak':
+        banner(this.root, `${RELICS.get(ev.id as string)?.name ?? 'A relic'} breaks`, 'var(--accent-2)');
+        await wait(500);
         return;
       case 'dead':
         banner(this.root, `${this.charName(ev.seat as Seat)} is dead`, 'var(--danger)');

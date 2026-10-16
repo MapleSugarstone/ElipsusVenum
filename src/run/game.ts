@@ -11,6 +11,8 @@ import type { DebugOp, Game, GameAction, NodeState, Offer, Run, RunSeat, Shop } 
 export const ACTS = 3;
 const SIDE_COUNT = 10;
 const BASE_TEETH = { normal: 3, elite: 6, boss: 10 };
+/** Teeth for a seat that an event option changed nothing for. */
+export const EMPTY_TEETH = 3;
 const PRICES: Record<string, number> = { common: 4, uncommon: 6, rare: 9, item: 3, relic: 10, remove: 5 };
 export const TOTEM_KEYWORDS = ['Airborne', 'Reach', 'Guardian', 'Sprinter', 'Burrower', 'Deadly', 'Spare Lives', 'Returning', 'Shield', 'Submerge'];
 export const TRIBES = ['Canine', 'Hooved', 'Avian', 'Insect', 'Reptile', 'Machine'];
@@ -101,6 +103,25 @@ function relicPool(s: RunSeat, rarities: string[]): string[] {
     .sort();
 }
 
+/** Sums a numeric field over the seat's relics. */
+function relicSum(s: RunSeat, field: 'moreRelics' | 'morePicks' | 'discount'): number {
+  return s.relics.reduce((a, id) => a + (RELICS.get(id)?.[field] ?? 0), 0);
+}
+
+/** Runs a run-level relic hook for every seat that has a relic with it. */
+function relicHooks(g: Game, ev: Ev[], fn: (def: NonNullable<ReturnType<typeof RELICS.get>>, r: RunCtx, seat: Seat) => void): void {
+  const r = new RunCtx(g, ev);
+  for (const i of SEATS) for (const id of [...g.run.seats[i].relics]) {
+    const def = RELICS.get(id);
+    if (def) fn(def, r, i);
+  }
+}
+
+/** A choice of relics for one seat: 3, plus any the seat's relics add. */
+function relicChoice(g: Game, seat: Seat, rarities: string[]): string[] {
+  return rollRelics(g, seat, rarities, 3 + relicSum(g.run.seats[seat], 'moreRelics'));
+}
+
 function rollRelics(g: Game, seat: Seat, rarities: string[], count: number): string[] {
   const pool = relicPool(g.run.seats[seat], rarities);
   const out: string[] = [];
@@ -113,16 +134,17 @@ function rollRelics(g: Game, seat: Seat, rarities: string[], count: number): str
 
 function rollShop(g: Game, seat: Seat): Shop {
   const s = g.run.seats[seat];
+  const off = relicSum(s, 'discount');
   const cards: Offer[] = [];
   for (const rarity of ['common', 'common', 'uncommon', 'uncommon', 'rare'] as Rarity[]) {
     const pool = cardPool(s.char, rarity).filter((id) => !cards.some((c) => c.id === id));
     if (pool.length === 0) continue;
     const id = pool[randInt(g.rng, pool.length)];
-    cards.push({ id, price: PRICES[rarity] + randInt(g.rng, 3) });
+    cards.push({ id, price: Math.max(1, PRICES[rarity] + randInt(g.rng, 3) - off) });
   }
   const itemIds = [...ITEMS.keys()].sort();
   const items: Offer[] = [];
-  for (let i = 0; i < 2 && itemIds.length; i++) items.push({ id: itemIds[randInt(g.rng, itemIds.length)], price: PRICES.item });
+  for (let i = 0; i < 2 && itemIds.length; i++) items.push({ id: itemIds[randInt(g.rng, itemIds.length)], price: Math.max(1, PRICES.item - off) });
   const relics = relicPool(s, ['common', 'uncommon']);
   const relic = relics.length ? { id: relics[randInt(g.rng, relics.length)], price: PRICES.relic } : null;
   return { cards, items, relic, removePrice: PRICES.remove, removed: false };
@@ -203,6 +225,7 @@ function endBattle(g: Game, ev: Ev[]): void {
     rs.candles = bs.candles;
     rs.alive = bs.alive;
     rs.items = [...bs.items];
+    rs.relics = [...bs.relics];
     rs.teeth = Math.max(0, rs.teeth + bs.teeth);
     for (const p of bs.perm) {
       for (const owner of run.seats) {
@@ -223,6 +246,7 @@ function endBattle(g: Game, ev: Ev[]): void {
   }
   for (const i of SEATS) run.seats[i].teeth += BASE_TEETH[tier];
   ev.push({ k: 'battleWon', tier, teeth: BASE_TEETH[tier] });
+  relicHooks(g, ev, (def, r, i) => def.afterWin?.(r, i, tier));
   if (tier === 'boss') {
     for (const i of SEATS) {
       const rs = run.seats[i];
@@ -237,6 +261,7 @@ function endBattle(g: Game, ev: Ev[]): void {
       done: [false, false],
       offers: [rollOffers(g, 0, 'boss'), rollOffers(g, 1, 'boss')],
       relics: [rollRelics(g, 0, ['boss', 'rare'], 3), rollRelics(g, 1, ['boss', 'rare'], 3)],
+      picks: [1, 1],
     };
   } else {
     const node: NodeState = {
@@ -245,13 +270,8 @@ function endBattle(g: Game, ev: Ev[]): void {
       offers: [rollOffers(g, 0, tier), rollOffers(g, 1, tier)],
     };
     if (tier === 'elite') {
-      node.relics = [rollRelics(g, 0, ['common', 'uncommon'], 1), rollRelics(g, 1, ['common', 'uncommon'], 1)];
-      SEATS.forEach((i) => {
-        const id = node.relics![i][0];
-        if (id) {
-          gainRelic(g, i, id, ev);
-        }
-      });
+      node.relics = [relicChoice(g, 0, ['common', 'uncommon', 'rare']), relicChoice(g, 1, ['common', 'uncommon', 'rare'])];
+      node.picks = [1, 1];
     }
     run.node = node;
   }
@@ -268,6 +288,7 @@ function enterNode(g: Game, ev: Ev[], id: number): void {
   run.votes = [null, null];
   run.locks = [false, false];
   ev.push({ k: 'enter', node: id, kind: node.kind });
+  relicHooks(g, ev, (def, r, i) => def.enterNode?.(r, i, node.kind));
   const fresh = (kind: NodeState['kind']): NodeState => ({ kind, done: [false, false] });
   switch (node.kind) {
     case 'battle':
@@ -289,13 +310,8 @@ function enterNode(g: Game, ev: Ev[], id: number): void {
       break;
     case 'treasure': {
       const n = fresh('treasure');
-      n.relics = [rollRelics(g, 0, ['common', 'uncommon'], 1), rollRelics(g, 1, ['common', 'uncommon'], 1)];
-      SEATS.forEach((i) => {
-        const r = n.relics![i][0];
-        if (r) {
-          gainRelic(g, i, r, ev);
-        }
-      });
+      n.relics = [relicChoice(g, 0, ['common', 'uncommon']), relicChoice(g, 1, ['common', 'uncommon'])];
+      n.picks = [0, 1].map((i) => Math.min(n.relics![i].length, 1 + relicSum(run.seats[i], 'morePicks'))) as [number, number];
       run.node = n;
       break;
     }
@@ -317,7 +333,9 @@ function enterNode(g: Game, ev: Ev[], id: number): void {
       break;
     }
     case 'event': {
-      const pool = [...EVENTS.values()].filter((e) => e.acts.includes(run.act)).sort((a, b) => (a.id < b.id ? -1 : 1));
+      const all = [...EVENTS.values()].filter((e) => e.acts.includes(run.act)).sort((a, b) => (a.id < b.id ? -1 : 1));
+      const fresh2 = all.filter((e) => !(run.seen ?? []).includes(e.id));
+      const pool = fresh2.length ? fresh2 : all;
       const total = pool.reduce((a, e) => a + (e.weight ?? 10), 0);
       let roll = randInt(g.rng, Math.max(1, total));
       let pick = pool[0];
@@ -328,6 +346,7 @@ function enterNode(g: Game, ev: Ev[], id: number): void {
         }
         roll -= e.weight ?? 10;
       }
+      if (pick) run.seen = [...(run.seen ?? []).filter((x) => x !== pick.id), pick.id];
       run.node = { ...fresh('event'), event: { id: pick?.id ?? '', stage: 0, votes: [null, null], locks: [false, false] } };
       break;
     }
@@ -336,7 +355,9 @@ function enterNode(g: Game, ev: Ev[], id: number): void {
 }
 
 function flipCoin(g: Game, ev: Ev[], votes: [number, number]): number {
-  const result = votes[randInt(g.rng, 2)];
+  const loaded = SEATS.filter((i) => g.run.seats[i].relics.includes('loaded-die'));
+  const roll = randInt(g.rng, 2);
+  const result = votes[loaded.length === 1 ? loaded[0] : roll];
   g.run.coin = { votes, result, n: (g.run.coin?.n ?? 0) + 1 };
   ev.push({ k: 'coin', votes, result });
   return result;
@@ -370,7 +391,13 @@ function resolveEvent(g: Game, ev: Ev[]): void {
   const choice = a === b ? a : flipCoin(g, ev, [a, b]);
   const def = EVENTS.get(e.id)!;
   const ctx = new RunCtx(g, ev);
+  const before = SEATS.map((i) => JSON.stringify(run.seats[i]));
   e.result = def.options[choice].run(ctx);
+  if (!ctx.pendingBattle && !run.over) {
+    const idle = SEATS.filter((i) => JSON.stringify(run.seats[i]) === before[i]);
+    for (const i of idle) ctx.teeth(i, EMPTY_TEETH);
+    if (idle.length) e.result += ` ${idle.map((i) => CHARACTERS[run.seats[i].char].name).join(' and ')} ${idle.length > 1 ? 'get' : 'gets'} ${EMPTY_TEETH} teeth for coming all this way.`;
+  }
   e.stage = 1;
   ev.push({ k: 'eventResult', i: choice, text: e.result });
   if (run.over) return;
@@ -427,7 +454,7 @@ export function legalGame(g: Game, seat: Seat, a: GameAction): string | null {
       return node.offers[seat][a.i] && !node.offers[seat][a.i].sold ? null : 'no such card';
     }
     case 'relic':
-      if (node.kind !== 'bossReward' || !node.relics) return 'no relic choice';
+      if (!node.relics || !(node.picks?.[seat] ?? 0)) return 'no relic choice';
       return node.relics[seat][a.i] ? null : 'no such relic';
     case 'buy': {
       const shop = node.shop?.[seat];
@@ -542,14 +569,18 @@ export function applyGameInPlace(g: Game, seat: Seat, a: GameAction, snap?: (b: 
         o.sold = true;
         ev.push({ k: 'deckAdd', seat, id: o.id, up: !!o.up });
       }
-      if (node!.kind !== 'bossReward') node!.done[seat] = true;
-      else node!.offers![seat] = [];
+      if (node!.kind === 'bossReward' || node!.relics?.[seat]?.length) node!.offers![seat] = [];
+      else node!.done[seat] = true;
       break;
     }
     case 'relic': {
       const id = node!.relics![seat][a.i];
       gainRelic(g, seat, id, ev);
-      node!.relics![seat] = [];
+      node!.relics![seat].splice(a.i, 1);
+      node!.picks![seat] -= 1;
+      if (!node!.picks![seat]) node!.relics![seat] = [];
+      if (node!.kind === 'treasure' && !node!.picks![seat]) node!.done[seat] = true;
+      if (node!.kind === 'reward' && !node!.relics![seat].length && !node!.offers![seat].length) node!.done[seat] = true;
       break;
     }
     case 'buy': {

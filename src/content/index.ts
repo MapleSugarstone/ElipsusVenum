@@ -13,6 +13,7 @@ import './act3.ts';
 import './items.ts';
 import './relics.ts';
 import './relics2.ts';
+import './relics3.ts';
 import './events.ts';
 import './events2.ts';
 import './events3.ts';

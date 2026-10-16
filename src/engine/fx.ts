@@ -275,6 +275,7 @@ export function die(env: Env, c: CardInst, killer: CardInst | null): void {
   }
   fireBoard(env, 'allyDies', (x) => x.side === c.side, c);
   if (c.side === 'p') fireSeat(env, c.seat, 'allyDies', c);
+  if (c.side === 'e' && b.seats[c.seat].alive && !b.seats[c.seat].won) fireSeat(env, c.seat, 'foeDies', c);
   if (killer && onBoard(b, killer)) fireCard(env, killer, 'kill', c);
   if (c.side === 'p' && killer && killer.side === 'e') scavenge(env, c.seat, ref.lane);
 }
@@ -333,6 +334,7 @@ export function scaleLoss(env: Env, seat: Seat, n: number, pierce = false): void
     s.candles -= 1;
     s.scale = 0;
     emit(env, { k: 'candle', seat, left: s.candles });
+    fireSeat(env, seat, 'candleOut', s.candles);
     if (s.candles <= 0) seatDies(env, seat);
     else emit(env, { k: 'scale', seat, n: 0, v: 0 });
   }
@@ -360,6 +362,7 @@ function winHalf(env: Env, seat: Seat): void {
   env.b.seats[seat].won = true;
   env.b.seats[seat].c.wonOn = env.b.turn;
   emit(env, { k: 'won', seat });
+  for (const s of [seat, other(seat)]) if (env.b.seats[s].alive) fireSeat(env, s, 'halfWon', seat);
   clearHalf(env, seat);
   checkOver(env);
 }
@@ -940,5 +943,28 @@ export class Ctx {
   }
   sameHalf(a: number, b2: number): boolean {
     return Math.floor(a / HALF) === Math.floor(b2 / HALF);
+  }
+  /** Relights candles in battle, as a relic that saves a seat does. */
+  relight(n: number, seat: Seat = this.seat): void {
+    const s = this.b.seats[seat];
+    s.candles += n;
+    emit(this.env, { k: 'relight', seat, v: s.candles });
+  }
+  /** Removes a relic for the rest of the run. */
+  breakRelic(id: string, seat: Seat = this.seat): void {
+    const r = this.b.seats[seat].relics;
+    const i = r.indexOf(id);
+    if (i < 0) return;
+    r.splice(i, 1);
+    emit(this.env, { k: 'relicBreak', seat, id });
+  }
+  hasRelic(id: string, seat: Seat = this.seat): boolean {
+    return this.b.seats[seat].relics.includes(id);
+  }
+  /** Gives a creature a keyword it does not have yet. */
+  grant(c: CardInst | null, kw: string, n?: number): void {
+    if (!c || c.ab.some((x) => x.a === kwId(kw))) return;
+    c.ab.push(n === undefined ? { a: kwId(kw) } : { a: kwId(kw), p: { n } });
+    emit(this.env, { k: 'grant', uid: c.uid, kw });
   }
 }

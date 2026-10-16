@@ -49,6 +49,19 @@ defEvent({
         return 'You leave the teeth on the counter in a neat row.';
       },
     },
+    {
+      label: 'Show him your Honest Badge',
+      secret: true,
+      text: 'Each of you gains a random relic and a random item.',
+      ok: (r) => r.anyRelic('honest-badge'),
+      run(r) {
+        r.each((_, i) => {
+          r.relic(i, 'uncommon');
+          r.item(i);
+        });
+        return 'The merchant wakes up, reads the badge twice, and gives you the good stuff from under the counter.';
+      },
+    },
   ],
 });
 
@@ -112,7 +125,7 @@ defEvent({
 });
 
 defEvent({
-  id: 'present', acts: [3], title: 'A Present',
+  id: 'present', acts: [2, 3], title: 'A Present',
   intro: 'I got you two a present. I wrapped it myself. Do not shake it.',
   options: [
     {
@@ -128,12 +141,10 @@ defEvent({
     },
     {
       label: 'Say thank you and keep it closed',
-      text: 'Each living player relights a candle, up to 2.',
+      text: 'Each of you gains the Wrapped Present, a relic.',
       run(r) {
-        r.each((s, i) => {
-          if (s.alive && s.candles < 2) r.candle(i, 1);
-        });
-        return 'He is so happy you liked it.';
+        r.each((_, i) => r.giveRelic(i, 'wrapped-present'));
+        return 'He is so happy you liked it. He says you can open it when you have earned it.';
       },
     },
   ],
@@ -147,6 +158,7 @@ defEvent({
       label: 'Listen to the whole thing',
       text: 'Each of you gives a random creature in your deck 4 health for the rest of the run.',
       run(r) {
+        r.flag('heard-story');
         r.each((s) => {
           const pool = s.deck.filter((c) => cardDef(c.id).kind === 'creature');
           if (!pool.length) return;

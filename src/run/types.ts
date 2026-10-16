@@ -52,6 +52,8 @@ export interface NodeState {
   done: [boolean, boolean];
   offers?: [Offer[], Offer[]];
   relics?: [string[], string[]];
+  /** Relics each seat may still take from `relics`. */
+  picks?: [number, number];
   shop?: [Shop, Shop];
   totems?: [{ tribe: string; kw: string }[], { tribe: string; kw: string }[]];
   event?: { id: string; stage: number; votes: [number | null, number | null]; locks: [boolean, boolean]; result?: string };
@@ -75,6 +77,10 @@ export interface Run {
   coin: null | { votes: [number, number]; result: number; n: number };
   battles: number;
   fight: null | 'normal' | 'elite' | 'boss';
+  /** Choices the players made that later events remember. */
+  flags?: Record<string, number>;
+  /** Events already met this run. They do not come up again until every event of the act has. */
+  seen?: string[];
 }
 
 export interface Game {

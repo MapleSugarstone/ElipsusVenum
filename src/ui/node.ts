@@ -4,8 +4,8 @@ import { ability, card as cardDef, ITEMS, kwInst, RELICS } from '../engine/regis
 import { cardLines, fillTemplate, type TextLine } from '../engine/text.ts';
 import type { AbilityInst } from '../engine/types.ts';
 import { other, type Seat } from '../engine/types.ts';
-import { EVENTS } from '../run/events.ts';
-import { deckLines } from '../run/game.ts';
+import { EVENTS, RunCtx } from '../run/events.ts';
+import { deckLines, EMPTY_TEETH } from '../run/game.ts';
 import type { GameAction, Offer } from '../run/types.ts';
 import type { App } from './app.ts';
 import { fullCard } from './card.ts';
@@ -54,6 +54,8 @@ function upgradePreview(dc: DeckCard): HTMLDivElement {
     cell('Upgraded', fullCard(dc.id, { up: true, ab: upAb(dc, true), dp: dc.dp, dh: dc.dh, scale, mark, markCost: !!up.cost, markStats: up.power !== undefined || up.health !== undefined })),
   );
 }
+
+const RARITY_LABEL: Record<string, string> = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', boss: 'Boss', special: 'Unique', start: 'Starting' };
 
 export class NodeScreen {
   readonly root: HTMLDivElement;
@@ -130,15 +132,8 @@ export class NodeScreen {
       case 'reward':
       case 'cards':
       case 'bossReward': {
-        if (node.kind === 'reward' && node.relics?.[seat]?.length) {
-          body.append(h('p', {}, 'Relic gained: ', this.relicTag(node.relics[seat][0])));
-        }
-        if (node.kind === 'bossReward' && node.relics?.[seat]?.length) {
-          body.append(h('p', {}, 'Choose a boss relic:'));
-          const row = h('div', { class: 'relic-list', style: { marginBottom: '14px' } });
-          node.relics[seat].forEach((r, i) => row.append(h('button', { disabled: !mine, onclick: () => this.send(seat, { t: 'relic', i }) }, this.relicTag(r))));
-          body.append(row);
-        }
+        const pick = this.relicPick(seat, mine);
+        if (pick) body.append(pick);
         const offers = node.offers?.[seat] ?? [];
         if (offers.length) {
           body.append(h('p', {}, 'Take one card, or skip.'));
@@ -150,9 +145,12 @@ export class NodeScreen {
         if (node.kind === 'bossReward') body.append(' ', doneBtn('Go on to the next act'));
         break;
       }
-      case 'treasure':
-        body.append(h('p', {}, 'Relic gained: ', node.relics?.[seat]?.[0] ? this.relicTag(node.relics[seat][0]) : 'none left to find'), doneBtn());
+      case 'treasure': {
+        const pick = this.relicPick(seat, mine);
+        body.append(pick ?? h('p', {}, 'The chest is empty.'));
+        if (!pick) body.append(doneBtn());
         break;
+      }
       case 'merchant': {
         const shop = node.shop![seat];
         const row = h('div', { class: 'offer-row', style: { marginBottom: '30px', gap: '8px', flexWrap: 'nowrap' } });
@@ -239,9 +237,24 @@ export class NodeScreen {
     this.render();
   }
 
-  private relicTag(id: string): HTMLElement {
-    const r = RELICS.get(id);
-    return h('span', { class: 'relic', title: r?.text ?? '' }, r ? `${r.name}: ${r.text}` : id);
+  /** The relics a seat may still take here, as buttons that show each relic's rules. */
+  private relicPick(seat: Seat, mine: boolean): HTMLElement | null {
+    const node = this.app.session!.game.run.node!;
+    const list = node.relics?.[seat] ?? [];
+    const left = node.picks?.[seat] ?? 0;
+    if (!list.length || !left) return null;
+    const box = h('div', { class: 'relic-choice' });
+    box.append(h('p', {}, left > 1 ? `Choose ${left} relics.` : 'Choose a relic.'));
+    const row = h('div', { class: 'relic-pick' });
+    list.forEach((id, i) => {
+      const r = RELICS.get(id);
+      if (!r) return;
+      row.append(h('button', { class: `relic-card r-${r.rarity}`, disabled: !mine, onclick: () => this.send(seat, { t: 'relic', i }) },
+        h('span', { class: 'relic-head' }, h('span', { class: `relic-icon r-${r.rarity}` }, r.name.slice(0, 1)), h('b', {}, r.name), h('span', { class: 'relic-rarity' }, RARITY_LABEL[r.rarity] ?? r.rarity)),
+        tipText(r.text)));
+    });
+    box.append(row);
+    return box;
   }
 
   /** The cards picked so far, shown small, and a button that opens the deck as a paged sheet to pick from. */
@@ -304,9 +317,12 @@ export class NodeScreen {
     box.append(h('h3', { style: { fontFamily: 'var(--font-display)', fontWeight: 'normal', fontSize: '28px', margin: '0 0 8px' } }, def.title));
     box.append(h('div', { class: 'intro' }, `Your Best Friend: ${def.intro}`));
     if (e.stage === 0) {
+      const probe = new RunCtx(structuredClone(g), []);
       def.options.forEach((o, i) => {
+        // A secret option shows only once the run has earned it.
+        if (o.secret && !(o.ok?.(probe) ?? true)) return;
         const btn = h('button', {
-          class: 'event-opt',
+          class: `event-opt ${o.secret ? 'secret' : ''}`,
           onclick: () => {
             if (this.app.solo()) {
               for (const seat of [0, 1] as Seat[]) {
@@ -321,6 +337,7 @@ export class NodeScreen {
         });
         box.append(btn);
       });
+      box.append(h('p', { class: 'event-note' }, `If the option you take changes nothing for one of you, that player gains ${EMPTY_TEETH} teeth.`));
       if (!this.app.solo()) {
         const seat = s.mine[0];
         box.append(
