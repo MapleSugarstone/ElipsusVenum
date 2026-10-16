@@ -449,8 +449,8 @@ export interface Puddle {
   seed: number;
   drift?: number;
   wobble?: number;
-  /** The outline: a round blob, a torn rectangle like a ripped photo, or a lens like an open eye. */
-  shape?: 'blob' | 'torn' | 'lens';
+  /** The outline: a round blob, or a lens like an open eye. */
+  shape?: 'blob' | 'lens';
 }
 
 /** Every scene a puddle can show, apart from the battle table. */
@@ -473,9 +473,9 @@ export function nodeGenre(kind: string, id: number): string {
 }
 
 function layout(mode: VoidMode, seed: number, feature: string): Puddle[] {
-  // Small puddles come in three outlines. The big ones stay round, since they hold the screen's own reality.
+  // Some small puddles are lenses. The big ones stay round, since they hold the screen's own reality.
   const shaped = (list: Puddle[]): Puddle[] =>
-    list.map((p, i) => (p.r >= 100 || p.genre === 'table' ? p : { ...p, shape: (['blob', 'torn', 'blob', 'lens'] as const)[(seed + i) % 4] }));
+    list.map((p, i) => (p.r >= 100 || p.genre === 'table' ? p : { ...p, shape: (['blob', 'blob', 'lens'] as const)[(seed + i) % 3] }));
   return shaped(baseLayout(mode, seed, feature));
 }
 
@@ -926,8 +926,7 @@ export class VoidRenderer {
       for (let x = x0; x <= x1; x++) {
         const ux = (x - cx) / (r * sx);
         const uy = (y - cy) / r;
-        const dist = p.shape === 'torn' ? Math.max(Math.abs(ux), Math.abs(uy) * 1.15)
-          : p.shape === 'lens' ? Math.max(Math.hypot(ux, uy - 0.6), Math.hypot(ux, uy + 0.6)) / 1.17
+        const dist = p.shape === 'lens' ? Math.max(Math.hypot(ux, uy - 0.6), Math.hypot(ux, uy + 0.6)) / 1.17
           : Math.hypot(ux, uy);
         if (dist > 1.25) continue;
         const ang = Math.atan2(uy, ux);
