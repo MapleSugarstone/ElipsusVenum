@@ -150,6 +150,280 @@ export const GENRES: Record<string, Painter> = {
     if (mortar) return ramp(R('#0c0a08', '#2a2018'), torch, th);
     return ramp(R('#1a1410', '#4a3524', '#8a5a34', '#e09a4a'), torch * 0.9 + 0.1, th);
   },
+  volcano(u, v, t, th) {
+    const slope = -0.28 + Math.abs(u) * 1.05;
+    if (v > slope) {
+      const river = Math.abs(u - 0.12 * Math.sin(v * 7)) < 0.05 + (v - slope) * 0.05;
+      if (river) return ramp(R('#a8300a', '#ff6a1a', '#ffd23a'), 0.55 + 0.35 * Math.sin(t * 3 + v * 9), th);
+      return ramp(R('#120a08', '#2a1812', '#4a2a1e', '#6e3e28'), 0.25 + (v - slope) * 0.5 - Math.abs(u) * 0.2, th);
+    }
+    const plume = Math.hypot(u * 1.6, v + 0.6) < 0.32 + 0.06 * Math.sin(t * 2 + u * 9);
+    if (plume) return ramp(R('#2a2024', '#4e3a36', '#7a5444'), 0.4 + vnoise(u * 4, v * 4 - t * 0.6, 3) * 0.5, th);
+    if (v < 0 && hash2(Math.floor((u + 1) * 28), Math.floor((v + 1) * 28 + t * 5), 5) > 0.984) return hex('#ffd23a');
+    return ramp(R('#10030a', '#3a0a12', '#7a1a12', '#c2401a'), (v + 1) * 0.6, th);
+  },
+  swamp(u, v, t, th, seed) {
+    const shore = 0.05 + 0.05 * Math.sin(u * 4 + 1);
+    for (const x of [-0.7, -0.62, 0.68, 0.74]) {
+      if (Math.abs(u - x) < 0.025 && v > shore - 0.45 - Math.abs(x) * 0.1 && v < shore + 0.1) return hex('#2e3a10');
+    }
+    if (v > shore) {
+      for (const [x, y] of [[-0.25, 0.35], [0.3, 0.55], [0.05, 0.75]]) if (Math.hypot((u - x) * 1, (v - y) * 2.2) < 0.13) return ramp(R('#1e5a1e', '#4a9a2a'), 0.6 + (u - x), th);
+      if (hash2(Math.floor((u + 1) * 16), Math.floor((v + 1) * 16 - t * 2), seed) > 0.97) return hex('#9ab060');
+      const ripple = Math.sin(u * 18 + Math.sin(v * 9 + t) * 2) * 0.5 + 0.5;
+      return ramp(R('#0c1a0c', '#1a2e14', '#2e4a1e'), ripple * 0.5 + (v - shore) * 0.3, th);
+    }
+    return ramp(R('#2a3418', '#4e5a2a', '#8a9a4a', '#c8c88a'), (v + 1) / (shore + 1) + 0.1 * vnoise(u * 3 + t * 0.1, v * 3, 2), th);
+  },
+  city(u, v, _t, th, seed) {
+    if (Math.hypot(u - 0.45, v + 0.55) < 0.14) return hex('#f4f0d8');
+    const col = Math.floor((u + 1) * 7);
+    const top = 0.6 - hash2(col, 0, seed) * 0.95;
+    if (v > top) {
+      const wx = Math.floor((u + 1) * 28), wy = Math.floor((v + 1) * 18);
+      if (wx % 2 === 0 && wy % 2 === 0 && v < 0.9 && hash2(wx, wy, seed + 3) > 0.55) return hex(hash2(wx, wy, 9) > 0.8 ? '#ff7a8a' : '#ffd86a');
+      return ramp(R('#06060e', '#10101e', '#1a1a2e'), 0.4 + (col % 3) * 0.2, th);
+    }
+    if (hash2(Math.floor((u + 1) * 40), Math.floor((v + 1) * 40), seed) > 0.985) return hex('#ffffff');
+    return ramp(R('#04041a', '#0c0c36', '#22205e', '#4a2a6e'), (v + 1) * 0.55, th);
+  },
+  platformer(u, v, t, th) {
+    if (v > 0.55) return v < 0.62 ? hex('#3cba3c') : ramp(R('#7a3a10', '#b8601e'), (Math.floor((u + 1) * 10) + Math.floor((v + 1) * 10)) % 2, th);
+    if (Math.hypot(u + 0.2, (v - 0.75) * 0.8) < 0.5 && v > 0.25) return ramp(R('#1e7a1e', '#3cba3c'), 0.5 + u * 0.4, th);
+    if (v > -0.15 && v < 0.05 && u > -0.45 && u < 0.45) {
+      const bx = Math.floor((u + 0.45) * 10);
+      const mortar = ((u + 0.45) * 10) % 1 < 0.1 || ((v + 0.15) * 10) % 1 < 0.12;
+      if (bx === 5) return mortar ? hex('#5e3a00') : (Math.abs(u - 0.1) < 0.03 && Math.abs(v + 0.05) < 0.06 ? hex('#5e3a00') : hex('#ffb82e'));
+      return mortar ? hex('#3a1a0a') : hex('#c25a1e');
+    }
+    for (const [x, y] of [[-0.55 + ((t * 0.05) % 1) * 0.2, -0.6], [0.4, -0.75]]) if (Math.hypot((u - x) * 0.7, v - y) < 0.12 || Math.hypot((u - x - 0.12) * 0.7, v - y + 0.05) < 0.1) return hex('#ffffff');
+    return ramp(R('#3c8cff', '#6eb4ff', '#9ad0ff'), (v + 1) * 0.6, th);
+  },
+  reef(u, v, t, th, seed) {
+    const ray = Math.sin(u * 6 + v * 3 + t * 0.4) > 0.86 && v < 0.3;
+    for (let k = 0; k < 3; k++) {
+      const fx = ((t * 0.12 + k * 0.37 + hash2(k, 1, seed)) % 1) * 2.4 - 1.2, fy = -0.3 + k * 0.22;
+      if (Math.hypot((u - fx) * 1.4, (v - fy) * 3) < 0.12) return hex(k === 1 ? '#ffd23a' : '#ff7a2e');
+      if (Math.abs(v - fy) < 0.03 && u < fx - 0.1 && u > fx - 0.18) return hex('#ff7a2e');
+    }
+    const coral = v > 0.35 + 0.25 * vnoise(u * 5, 1, seed) - 0.15 * Math.abs(Math.sin(u * 9));
+    if (coral) return ramp(R('#6b0f3a', '#c23a6e', '#ff7aa8', '#ffb07a'), vnoise(u * 8, v * 8, seed + 1), th);
+    return ramp(R('#020c24', '#06306a', '#0e5aa8', '#3cc8ff'), (1 - (v + 1) / 2) * 0.9 + (ray ? 0.25 : 0), th);
+  },
+  aurora(u, v, t, th) {
+    if (v > 0.45 + 0.1 * Math.sin(u * 3)) return ramp(R('#6e7a90', '#a8b4c8', '#dfe8f5'), 0.4 + (v - 0.45) * 0.6, th);
+    const band = Math.abs(v + 0.35 - 0.18 * Math.sin(u * 3 + t * 0.4)) ;
+    if (band < 0.22) return ramp(R('#0a2a2a', '#1ea870', '#4affb0', '#c06aff'), 1 - band / 0.22 + 0.1 * Math.sin(u * 14 + t), th);
+    if (hash2(Math.floor((u + 1) * 36), Math.floor((v + 1) * 36), 4) > 0.985) return hex('#ffffff');
+    return ramp(R('#020612', '#06142a', '#0a2440'), (v + 1) * 0.5, th);
+  },
+  sunset(u, v, t, th) {
+    if (Math.abs(u + 0.55 + v * 0.15) < 0.04 && v > -0.35 && v < 0.6) return hex('#140a0e');
+    if (Math.hypot(u + 0.55 + 0.2, v + 0.4) < 0.22 && Math.abs(Math.atan2(v + 0.4, u + 0.75)) > 0.3) {
+      if (Math.sin(Math.atan2(v + 0.4, u + 0.75) * 7) > 0.2) return hex('#140a0e');
+    }
+    if (v < 0.1) {
+      if (Math.hypot(u - 0.15, v - 0.1) < 0.32) return ramp(R('#ff7a1a', '#ffb82e', '#fff36b'), 1 - Math.hypot(u - 0.15, v - 0.1) * 2.5, th);
+      return ramp(R('#3a0a4a', '#a8205e', '#ff5a3a', '#ffb05a'), (v + 1) / 1.1, th);
+    }
+    const glint = Math.abs(u - 0.15) < 0.25 - v * 0.15 && Math.sin(v * 40 + t * 3) > 0.3;
+    return glint ? hex('#ffd86a') : ramp(R('#1a0a2a', '#3a1450', '#6e2a6e'), 1 - (v - 0.1), th);
+  },
+  crystals(u, v, t, th, seed) {
+    for (let k = 0; k < 5; k++) {
+      const cx = -0.75 + k * 0.38 + (hash2(k, 0, seed) - 0.5) * 0.2, top = -0.35 + hash2(k, 1, seed) * 0.5;
+      const half = (v - top) * 0.35;
+      if (v > top && Math.abs(u - cx) < half) {
+        const edge = Math.abs(u - cx) > half - 0.03;
+        return ramp(k % 2 ? R('#3a1460', '#9a4aff', '#e0b0ff') : R('#0a3a4a', '#2ad0e0', '#c8fff8'), edge ? 1 : 0.4 + 0.3 * Math.sin(t * 2 + k), th);
+      }
+    }
+    return ramp(R('#08040e', '#160c22', '#2a1640'), 0.3 + 0.3 * vnoise(u * 4, v * 4, seed) + (v > 0.6 ? 0.2 : 0), th);
+  },
+  candy(u, v, t, th) {
+    const d = Math.hypot(u - 0.1, v + 0.2);
+    if (d < 0.42) {
+      const swirl = Math.sin(Math.atan2(v + 0.2, u - 0.1) * 3 + d * 18 - t);
+      return swirl > 0 ? hex('#ff4a8a') : hex('#fff4f8');
+    }
+    if (Math.abs(u - 0.1) < 0.04 && v > 0.2) return hex('#f4f0e8');
+    if (hash2(Math.floor((u + 1) * 22), Math.floor((v + 1) * 22), 6) > 0.95) return hex(['#4ad0ff', '#ffd23a', '#7aff7a'][Math.floor(hash2(Math.floor((u + 1) * 22), 3, 2) * 3)]);
+    return Math.sin((u + v) * 9) > 0 ? ramp(R('#ffb0d0', '#ffd0e4'), (v + 1) / 2, th) : hex('#fff0f6');
+  },
+  canyon(u, v, _t, th) {
+    const arch = Math.hypot(u * 0.9, v - 0.2);
+    if (arch < 0.62 && arch > 0.42 && v < 0.25) return ramp(R('#6e2a10', '#b8521e', '#e8884a'), 0.5 - (v - 0.2) * 0.5 + Math.sin(v * 20) * 0.15, th);
+    if (v > 0.25) return ramp(R('#5e2410', '#a84a1e', '#d8783a', '#f0a868'), 0.6 - (v - 0.25) * 0.6 + 0.2 * Math.sin(v * 24 + u * 2), th);
+    return ramp(R('#4a8ac8', '#8ac0e8', '#f0d8b0'), (v + 1) / 1.25, th);
+  },
+  graveyard(u, v, t, th, seed) {
+    if (Math.hypot(u - 0.4, v + 0.5) < 0.2) return ramp(R('#c8c0a8', '#f4ecd0'), 0.7 - (u - 0.4), th);
+    const tree = Math.abs(u + 0.5 + 0.05 * Math.sin(v * 8)) < 0.04 && v > -0.45 && v < 0.5;
+    const branch = v < -0.1 && v > -0.55 && Math.abs((v + 0.1) + Math.abs(u + 0.5) * 0.8) < 0.025 && Math.abs(u + 0.5) < 0.35;
+    if (tree || branch) return hex('#06040a');
+    for (let k = 0; k < 4; k++) {
+      const gx = -0.3 + k * 0.32, gy = 0.42 + (k % 2) * 0.1;
+      if (Math.abs(u - gx) < 0.08 && v > gy - 0.12 && v < gy + 0.2 && Math.hypot((u - gx) / 0.08, (v - gy + 0.12) / 0.08) > 1 - (v > gy - 0.04 ? 1 : 0)) return ramp(R('#2a2a34', '#5e5e6e', '#8a8a9a'), 0.5 - (u - gx) * 3, th);
+    }
+    const fog = vnoise(u * 3 + t * 0.15, v * 5, seed) * (v > 0.2 ? 1 : 0.3);
+    if (v > 0.5) return ramp(R('#0a0e0a', '#1a221a', '#3a4a3a'), 0.3 + fog * 0.6, th);
+    return ramp(R('#06020e', '#140a24', '#2a1a40', '#4a3a5e'), (v + 1) * 0.35 + fog * 0.4, th);
+  },
+  circuit(u, v, t, th, seed) {
+    const gx = (u + 1) * 7, gy = (v + 1) * 7;
+    const cx = Math.floor(gx), cy = Math.floor(gy);
+    if (Math.abs(u + 0.1) < 0.28 && Math.abs(v - 0.05) < 0.2) {
+      if (Math.abs(u + 0.1) > 0.25 && Math.floor((v + 1) * 30) % 2 === 0) return hex('#c8b070');
+      return ramp(R('#06060a', '#141418', '#24242c'), 0.5 + (u + 0.1), th);
+    }
+    const onH = Math.abs(gy - cy - 0.5) < 0.09 && hash2(cx, cy, seed) > 0.4;
+    const onV = Math.abs(gx - cx - 0.5) < 0.09 && hash2(cx, cy, seed + 1) > 0.55;
+    if (onH || onV) return hash2(cx, cy, Math.floor(t * 3)) > 0.93 ? hex('#fff36b') : hex('#d4a400');
+    if (Math.hypot(gx - cx - 0.5, gy - cy - 0.5) < 0.18 && hash2(cx, cy, seed + 2) > 0.8) return Math.sin(t * 4 + cx) > 0 ? hex('#ff3a3a') : hex('#5a0a0a');
+    return ramp(R('#04200e', '#0a3a18', '#145a24'), 0.5 + 0.2 * vnoise(u * 6, v * 6, seed), th);
+  },
+  mall(u, v, t, th) {
+    for (const x of [-0.6, 0.6]) if (Math.abs(u - x) < 0.1 && v < 0.2) return ramp(R('#b8a8d8', '#f0e8ff'), 0.5 - (u - x) * 4, th);
+    if (v > 0.2) {
+      const z = 1 / (v - 0.1);
+      return (Math.floor(u * z * 1.5) + Math.floor(z * 1.2 + t * 0.4)) % 2 ? hex('#1a0a2a') : hex('#e8e0f4');
+    }
+    if (Math.hypot(u, v + 0.15) < 0.32 && Math.floor((v + 1) * 18) % 3 !== 0) return ramp(R('#ff4ab0', '#ffb05a'), 1 - (v + 0.45) / 0.3, th);
+    return ramp(R('#2a0a4a', '#7a2a9a', '#ff6ac8'), (v + 1) * 0.8, th);
+  },
+  jungle(u, v, t, th, seed) {
+    const lx = Math.floor((u + 1) * 4), ly = Math.floor((v + 1) * 4);
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+      const cx = lx + dx, cy = ly + dy;
+      const px = cx / 4 - 1 + hash2(cx, cy, seed) * 0.25, py = cy / 4 - 1 + hash2(cx, cy, seed + 1) * 0.25;
+      const a = hash2(cx, cy, seed + 2) * 3;
+      const qx = (u - px) * Math.cos(a) + (v - py) * Math.sin(a), qy = -(u - px) * Math.sin(a) + (v - py) * Math.cos(a);
+      if (Math.hypot(qx / 0.28, qy / 0.11) < 1) return ramp(R('#062a0a', '#145a14', '#2e9a2a', '#7ad83a'), 0.4 + qx + (Math.abs(qy) < 0.012 ? 0.4 : 0), th);
+    }
+    if (Math.abs(u - 0.32) < 0.03 && Math.abs(v + 0.05) < 0.03 && Math.sin(t * 0.8) > -0.5) return hex('#ffe23a');
+    if (Math.abs(u - 0.42) < 0.03 && Math.abs(v + 0.05) < 0.03 && Math.sin(t * 0.8) > -0.5) return hex('#ffe23a');
+    return ramp(R('#010602', '#041408', '#0a2410'), 0.4 + 0.3 * vnoise(u * 5, v * 5 + t * 0.05, seed), th);
+  },
+  skyisland(u, v, t, th) {
+    if (v > 0.4 + 0.08 * Math.sin(u * 7 + t * 0.3)) return ramp(R('#c8d8f0', '#ffffff'), 0.6 + 0.3 * Math.sin(u * 5), th);
+    const iy = v + 0.05 + 0.03 * Math.sin(t * 0.8);
+    if (iy > -0.15 && iy < 0.35 - Math.abs(u) * 0.6 && Math.abs(u) < 0.5) {
+      if (iy < -0.08) return hex('#3cba3c');
+      if (Math.abs(u - 0.3) < 0.03 && iy > 0) return ramp(R('#3cc8ff', '#c8f6ff'), 0.6, th);
+      return ramp(R('#4a2a10', '#7a4a20', '#a86a30'), 0.6 - iy, th);
+    }
+    if (Math.abs(u + 0.1) < 0.03 && iy > -0.4 && iy < -0.15) return hex('#5e3a1a');
+    if (Math.hypot(u + 0.1, (iy + 0.45) * 1.3) < 0.14) return ramp(R('#1e7a1e', '#3cba3c'), 0.6, th);
+    if (Math.abs(u - 0.3) < 0.025 && v > 0.1) return hex('#c8f6ff');
+    return ramp(R('#3c8cff', '#7ab8ff', '#c8e4ff'), (v + 1) * 0.6, th);
+  },
+  rain(u, v, t, th, seed) {
+    if (Math.abs(u) < 0.04 || Math.abs(v + 0.05) < 0.04 || Math.abs(u) > 0.88 || Math.abs(v) > 0.88) return ramp(R('#2a1a0e', '#4a2e18', '#6e4426'), 0.5 + u * 0.3, th);
+    const sx = Math.floor((u + 1) * 24), sy = (v + 1) * 6 - t * 3 + hash2(sx, 0, seed) * 6;
+    if (hash2(sx, Math.floor(sy), seed) > 0.8 && sy % 1 < 0.35) return hex('#8ab8e8');
+    if (hash2(Math.floor((u + 1) * 18), Math.floor((v + 1) * 18), seed + 5) > 0.97) return hex('#c8e4ff');
+    const lamp = Math.max(0, 1 - Math.hypot(u - 0.45, v - 0.4) * 1.8);
+    return ramp(R('#040a1a', '#0a1a34', '#16305a', '#ffd86a'), 0.2 + (1 - (v + 1) / 2) * 0.3 + lamp * 0.6, th);
+  },
+  library(u, v, _t, th, seed) {
+    const shelf = Math.floor((v + 1) * 3);
+    const sv = ((v + 1) * 3) % 1;
+    if (sv > 0.86) return ramp(R('#2a1408', '#5e3418', '#8a5428'), 0.6 - (sv - 0.86) * 4, th);
+    const bx = Math.floor((u + 1) * 14 + shelf * 3);
+    const h = 0.25 + hash2(bx, shelf, seed) * 0.6;
+    if (sv < 0.86 - h * 0.8) return ramp(R('#0a0604', '#1a0e08'), 0.4, th);
+    const cols = R('#6b140e', '#14306b', '#1e5a1e', '#6e4a10', '#3a1460', '#a88a3a');
+    const c = cols[Math.floor(hash2(bx, shelf, seed + 1) * cols.length)];
+    const edge = ((u + 1) * 14 + shelf * 3) % 1 < 0.14;
+    return edge ? [c[0] * 0.5, c[1] * 0.5, c[2] * 0.5] : (Math.abs(sv - 0.86 + h * 0.4) < 0.03 ? hex('#d4ba00') : c);
+  },
+  moon(u, v, t, th, seed) {
+    if (Math.hypot(u + 0.45, v + 0.5) < 0.2) {
+      const land = vnoise((u + 0.45) * 9 + t * 0.05, (v + 0.5) * 9, seed) > 0.55;
+      return land ? hex('#3cba5a') : ramp(R('#1a4aa8', '#3c8cff'), 0.5 - (u + 0.45) * 2, th);
+    }
+    if (v > 0.05 + 0.08 * Math.sin(u * 3)) {
+      for (const [x, y, r] of [[-0.3, 0.4, 0.16], [0.35, 0.3, 0.12], [0.1, 0.7, 0.2]]) {
+        const d = Math.hypot(u - x, (v - y) * 2) / r;
+        if (d < 1) return ramp(R('#3a3a42', '#5e5e68', '#9a9aa4'), d < 0.85 ? 0.2 + d * 0.3 : 0.95, th);
+      }
+      return ramp(R('#4e4e58', '#7a7a84', '#a8a8b2'), 0.5 + 0.3 * vnoise(u * 7, v * 7, seed), th);
+    }
+    return hash2(Math.floor((u + 1) * 40), Math.floor((v + 1) * 40), seed) > 0.975 ? hex('#ffffff') : hex('#030306');
+  },
+  eye(u, v, t, th) {
+    const open = Math.sin(t * 0.7) > -0.92 ? 1 : 0.1;
+    const lid = Math.hypot(u, v / (0.55 * open + 0.001));
+    if (lid > 0.95) return ramp(R('#4a0a1a', '#8a2a3a', '#c25a5e'), 0.5 + 0.3 * vnoise(u * 5, v * 5, 7), th);
+    if (lid > 0.88) return hex('#2a0610');
+    const px = 0.25 * Math.sin(t * 0.33), py = 0.08 * Math.sin(t * 0.5);
+    const ir = Math.hypot(u - px, v - py);
+    if (ir < 0.12) return hex('#020202');
+    if (ir < 0.32) return ramp(R('#0a3a3a', '#1ea8a0', '#7affe0'), 1 - ir * 2.6 + 0.2 * Math.sin(Math.atan2(v - py, u - px) * 9), th);
+    const vein = Math.abs(Math.sin(Math.atan2(v, u) * 7 + lid * 6)) < 0.06 && lid > 0.5;
+    return vein ? hex('#c22a2a') : ramp(R('#c8b8b0', '#f4ece8'), 1 - lid * 0.5, th);
+  },
+  static(u, v, t, th) {
+    const frame = Math.floor(t * 8);
+    const scan = Math.floor((v + 1) * 20 + t * 6) % 7 === 0;
+    if (Math.floor(t * 0.4) % 4 === 0) {
+      const bars = R('#e8e8e8', '#e8e83a', '#3ae8e8', '#3ae83a', '#e83ae8', '#e83a3a', '#3a3ae8');
+      return v < 0.4 ? bars[Math.min(6, Math.floor((u + 1) * 3.5))] : hex(Math.floor((u + 1) * 7) % 2 ? '#141414' : '#3a3a3a');
+    }
+    const n = hash2(Math.floor((u + 1) * 40), Math.floor((v + 1) * 40), frame);
+    return ramp(R('#0a0a0a', '#4a4a4a', '#9a9a9a', '#e8e8e8'), n * (scan ? 0.4 : 1), th);
+  },
+  stained(u, v, t, th, seed) {
+    const cell = 3.4;
+    const gx = (u + 1) * cell, gy = (v + 1) * cell;
+    let best = 9, second = 9, id = 0;
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) {
+      const cx = Math.floor(gx) + dx, cy = Math.floor(gy) + dy;
+      const d = Math.hypot(gx - cx - hash2(cx, cy, seed), gy - cy - hash2(cx, cy, seed + 1));
+      if (d < best) { second = best; best = d; id = cx * 31 + cy; } else if (d < second) second = d;
+    }
+    if (second - best < 0.09) return hex('#08060a');
+    const cols = [R('#4a0a14', '#a8203a', '#ff6a7a'), R('#0a1a4a', '#2a5ac8', '#8ab8ff'), R('#3a3000', '#c8a000', '#fff06a'), R('#0a3a14', '#2a9a3a', '#8aff8a'), R('#2a0a4a', '#7a2ac8', '#d0a0ff')];
+    const light = 0.6 + 0.3 * Math.sin(t * 0.5 + u * 2) - best * 0.4;
+    return ramp(cols[Math.abs(id) % cols.length], light, th);
+  },
+  mushrooms(u, v, t, th, seed) {
+    for (const [x, top, r, glow] of [[-0.45, -0.15, 0.32, 0], [0.4, -0.35, 0.38, 1], [0.0, 0.25, 0.2, 0]] as const) {
+      const cap = Math.hypot((u - x) / r, (v - top) / (r * 0.6));
+      if (cap < 1 && v < top + r * 0.15) {
+        const spot = hash2(Math.floor((u + 1) * 12), Math.floor((v + 1) * 12), seed) > 0.78;
+        if (glow) return spot ? hex('#c8fff8') : ramp(R('#0a3a4a', '#2ad0e0', '#7affff'), 0.7 - cap * 0.4 + 0.15 * Math.sin(t * 2), th);
+        return spot ? hex('#fff4e8') : ramp(R('#5a0a0a', '#c22a1e', '#ff6a4a'), 0.8 - cap * 0.5, th);
+      }
+      if (Math.abs(u - x) < r * 0.22 && v >= top && v < 1) return ramp(R('#b8a888', '#e8dcc0'), 0.6 - (u - x) * 3, th);
+    }
+    if (hash2(Math.floor((u + 1) * 30), Math.floor((v + 1) * 30 - t * 0.6), seed + 4) > 0.985) return hex('#7affff');
+    return ramp(R('#020410', '#06102a', '#0e1e40'), 0.3 + (v + 1) * 0.25, th);
+  },
+  farm(u, v, t, th) {
+    if (v > 0.15) {
+      const wave = Math.sin(u * 10 + t * 1.5 + v * 4);
+      return ramp(R('#8a6a10', '#d4a82a', '#ffe06a'), 0.4 + wave * 0.3 + ((v * 14) % 1 < 0.2 ? -0.3 : 0), th);
+    }
+    if (u > -0.1 && u < 0.45 && v > -0.3) {
+      if (Math.abs(u - 0.17) < 0.07 && v > -0.12) return hex('#2a0a06');
+      return ramp(R('#6b0e0a', '#b8201a', '#e84a3a'), 0.6 - (u - 0.17), th);
+    }
+    if (v > -0.3 - (0.27 - Math.abs(u - 0.17)) * 0.9 && v <= -0.3 && Math.abs(u - 0.17) < 0.31) return hex('#3a1a10');
+    if (Math.hypot(u + 0.6, v + 0.55) < 0.12) return hex('#fff36b');
+    return ramp(R('#4a9ae8', '#8ac4f4', '#dcf0ff'), (v + 1) * 0.7, th);
+  },
+  icecave(u, v, t, th, seed) {
+    const ix = Math.floor((u + 1) * 9);
+    const len = 0.2 + hash2(ix, 0, seed) * 0.5;
+    const local = ((u + 1) * 9) % 1;
+    if (v < -1 + len * (1 - Math.abs(local - 0.5) * 2)) return ramp(R('#6ab8e8', '#c8f0ff', '#ffffff'), 0.5 + (0.5 - Math.abs(local - 0.5)), th);
+    if (v > 0.5) {
+      const shine = Math.abs(Math.sin(u * 6 - t * 0.3)) > 0.95;
+      return shine ? hex('#ffffff') : ramp(R('#2a5a8a', '#5a9ad0', '#a8d8f8'), 0.5 + (v - 0.5), th);
+    }
+    return ramp(R('#04122a', '#0a2a4e', '#164a7a', '#3a7ab8'), 0.3 + 0.35 * vnoise(u * 3, v * 3 + t * 0.05, seed) + (v + 1) * 0.1, th);
+  },
   table(u, v, t, th) {
     const plank = Math.floor((v + 1) * 4.5);
     const grain = vnoise(u * 9, (v + 1) * 4.5 * 3 + plank * 13, 21);
@@ -175,7 +449,16 @@ export interface Puddle {
   seed: number;
   drift?: number;
   wobble?: number;
+  /** The outline: a round blob, a torn rectangle like a ripped photo, or a lens like an open eye. */
+  shape?: 'blob' | 'torn' | 'lens';
 }
+
+/** Every scene a puddle can show, apart from the battle table. */
+export const SCENES = [
+  'meadow', 'neon', 'desert', 'ocean', 'office', 'space', 'crayon', 'forest', 'flesh', 'glitch', 'snow', 'dungeon',
+  'volcano', 'swamp', 'city', 'platformer', 'reef', 'aurora', 'sunset', 'crystals', 'candy', 'canyon', 'graveyard', 'circuit',
+  'mall', 'jungle', 'skyisland', 'rain', 'library', 'moon', 'eye', 'static', 'stained', 'mushrooms', 'farm', 'icecave',
+];
 
 export type VoidMode = 'title' | 'map' | 'battle' | 'node' | 'event' | 'menu';
 
@@ -184,16 +467,20 @@ const NODE_GENRE: Record<string, string> = {
   battle: 'dungeon', elite: 'flesh', boss: 'glitch', rest: 'meadow', merchant: 'office', treasure: 'space',
   cards: 'crayon', mycologist: 'forest', stones: 'desert', woodcarver: 'snow',
 };
-const EVENT_GENRES = ['neon', 'ocean', 'crayon', 'space', 'snow', 'flesh', 'desert', 'meadow'];
+const EVENT_GENRES = ['neon', 'ocean', 'crayon', 'space', 'snow', 'flesh', 'desert', 'meadow', 'volcano', 'swamp', 'city', 'reef', 'aurora', 'sunset', 'crystals', 'candy', 'canyon', 'graveyard', 'mall', 'skyisland', 'rain', 'library', 'moon', 'eye', 'static', 'stained', 'mushrooms', 'farm', 'icecave'];
 export function nodeGenre(kind: string, id: number): string {
   return NODE_GENRE[kind] ?? EVENT_GENRES[id % EVENT_GENRES.length];
 }
 
 function layout(mode: VoidMode, seed: number, feature: string): Puddle[] {
-  const pick = (i: number) => {
-    const names = ['meadow', 'neon', 'desert', 'ocean', 'office', 'space', 'crayon', 'forest', 'flesh', 'glitch', 'snow', 'dungeon'];
-    return names[(seed + i * 7) % names.length];
-  };
+  // Small puddles come in three outlines. The big ones stay round, since they hold the screen's own reality.
+  const shaped = (list: Puddle[]): Puddle[] =>
+    list.map((p, i) => (p.r >= 100 || p.genre === 'table' ? p : { ...p, shape: (['blob', 'torn', 'blob', 'lens'] as const)[(seed + i) % 4] }));
+  return shaped(baseLayout(mode, seed, feature));
+}
+
+function baseLayout(mode: VoidMode, seed: number, feature: string): Puddle[] {
+  const pick = (i: number) => SCENES[(seed * 5 + i * 11) % SCENES.length];
   switch (mode) {
     case 'battle':
       return [
@@ -217,9 +504,9 @@ function layout(mode: VoidMode, seed: number, feature: string): Puddle[] {
         { genre: 'neon', x: 1260, y: 170, r: 90, seed: 2, drift: 1 },
         { genre: 'flesh', x: 1420, y: 700, r: 110, seed: 3, drift: 1 },
         { genre: 'meadow', x: 210, y: 720, r: 80, seed: 4, drift: 1 },
-        { genre: 'glitch', x: 780, y: 820, r: 50, seed: 5, drift: 1 },
+        { genre: 'eye', x: 780, y: 820, r: 50, seed: 5, drift: 1 },
         { genre: 'space', x: 860, y: 90, r: 44, seed: 6, drift: 1 },
-        { genre: 'ocean', x: 1000, y: 560, r: 36, seed: 7, drift: 1 },
+        { genre: 'static', x: 1000, y: 560, r: 36, seed: 7, drift: 1 },
       ];
     case 'event':
       // The event box fills the left half, so the event's own reality fills the right.
@@ -639,7 +926,9 @@ export class VoidRenderer {
       for (let x = x0; x <= x1; x++) {
         const ux = (x - cx) / (r * sx);
         const uy = (y - cy) / r;
-        const dist = Math.hypot(ux, uy);
+        const dist = p.shape === 'torn' ? Math.max(Math.abs(ux), Math.abs(uy) * 1.15)
+          : p.shape === 'lens' ? Math.max(Math.hypot(ux, uy - 0.6), Math.hypot(ux, uy + 0.6)) / 1.17
+          : Math.hypot(ux, uy);
         if (dist > 1.25) continue;
         const ang = Math.atan2(uy, ux);
         const edge = 1 + wob * (vnoise(Math.cos(ang) * 2 + 5, Math.sin(ang) * 2 + 5 + this.boilSeed * 0.35, p.seed) - 0.5) * 2;

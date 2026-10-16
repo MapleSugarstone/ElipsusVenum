@@ -1,5 +1,5 @@
 import { card as cardDef, type CardDef } from '../engine/registry.ts';
-import { BAYER, GENRES } from './void.ts';
+import { BAYER, GENRES, SCENES } from './void.ts';
 import { subjectFor, type Mat, type Pen } from './subjects.ts';
 
 const W = 64;
@@ -41,7 +41,7 @@ const CLAY: Record<string, RGB[]> = {
   spell: R('#1a1406', '#4a3a0a', '#a08410', '#d4ba00', '#fff6a0'),
 };
 
-const BACKDROPS = ['meadow', 'neon', 'desert', 'ocean', 'office', 'space', 'crayon', 'forest', 'snow', 'dungeon', 'flesh', 'glitch'];
+const BACKDROPS = SCENES;
 
 function silhouette(ctx: CanvasRenderingContext2D, def: CardDef, r: () => number): void {
   const tribe = def.tribe ?? '';
