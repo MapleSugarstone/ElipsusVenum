@@ -12,6 +12,11 @@ ROOMS_PER_DAY = "150"
 [observability]
 enabled = true
 
+# Only the relay's own log lines are kept. A log for every run would count each relayed message
+# against the account's daily log limit.
+[observability.logs]
+invocation_logs = false
+
 [[durable_objects.bindings]]
 name = "ROOM"
 class_name = "Room"
